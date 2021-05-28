@@ -3,9 +3,8 @@ FROM golang:1.15
 WORKDIR /go/src/simulator
 COPY . .
 
-RUN go mod download
-RUN go get github.com/githubnemo/CompileDaemon
+RUN go mod download && \
+    go get github.com/githubnemo/CompileDaemon && \
+    go install -v ./...
 
-RUN go install -v ./...
-
-CMD CompileDaemon --build="go install ./..." --command="simulator"
+CMD ["CompileDaemon", "--build='go install ./...'", "--command='simulator'"]
