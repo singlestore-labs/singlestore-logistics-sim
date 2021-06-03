@@ -30,6 +30,7 @@ services:
       # persist data between runs:
       - /var/lib/memsql
       - ./schema.sql:/init.sql
+      - ./data:/data
     ports:
       - 3306:3306
       - 8080:8080
