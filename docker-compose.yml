@@ -13,13 +13,14 @@ services:
       - --node-id
       - '0'
       - --kafka-addr
-      - PLAINTEXT://0.0.0.0:29092,OUTSIDE://redpanda:9092
+      - PLAINTEXT://0.0.0.0:29092,DOCKER://redpanda:9092,OUTSIDE://redpanda:9093
       - --advertise-kafka-addr
-      - PLAINTEXT://redpanda:29092,OUTSIDE://redpanda:9092
-    image: vectorized/redpanda:v21.5.5
+      - PLAINTEXT://redpanda:29092,DOCKER://redpanda:9092,OUTSIDE://127.0.0.1:9093
+    image: vectorized/redpanda:v21.5.7
     container_name: redpanda
     ports:
       - 9092:9092
+      - 9093:9093
       - 29092:29092
     volumes:
       - /var/lib/redpanda/data
@@ -30,6 +31,7 @@ services:
       # persist data between runs:
       - /var/lib/memsql
       - ./schema.sql:/init.sql
+      - ./data:/data
     ports:
       - 3306:3306
       - 8080:8080
