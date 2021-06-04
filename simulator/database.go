@@ -88,7 +88,7 @@ func NewSingleStore(config DatabaseConfig) (*SingleStore, error) {
 
 func (s *SingleStore) Locations() ([]DBLocation, error) {
 	out := make([]DBLocation, 0)
-	return out, s.db.Select(out, `
+	return out, s.db.Select(&out, `
 		SELECT
 			locationid,
 			kind,
@@ -100,14 +100,14 @@ func (s *SingleStore) Locations() ([]DBLocation, error) {
 
 func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
 	out := make([]DBActivePackage, 0)
-	return out, s.db.Select(out, `
+	return out, s.db.Select(&out, `
 		SELECT
-			packageid,
-			method,
-			destination_locationid AS destinationlocationid,
+			p.packageid,
+			p.method,
+			p.destination_locationid AS destinationlocationid,
 
-			GEOGRAPHY_LONGITUDE(lonlat) AS longitude,
-			GEOGRAPHY_LATITUDE(lonlat) AS latitude,
+			GEOGRAPHY_LONGITUDE(p.lonlat) AS longitude,
+			GEOGRAPHY_LATITUDE(p.lonlat) AS latitude,
 
 			pt.kind AS transitionkind,
 			pt.seq AS transitionseq,

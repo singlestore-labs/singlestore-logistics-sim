@@ -10,6 +10,8 @@ require (
 	github.com/paulmach/orb v0.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0
+	github.com/seiflotfy/cuckoofilter v0.0.0-20201222105146-bc6005554a0c
 	golang.org/x/text v0.3.5
 	gonum.org/v1/gonum v0.9.1
+	gopkg.in/yaml.v2 v2.4.0
 )
