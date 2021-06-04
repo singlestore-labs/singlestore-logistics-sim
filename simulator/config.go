@@ -16,6 +16,10 @@ type DatabaseConfig struct {
 	Database string `yaml:"database"`
 }
 
+type TopicsConfig struct {
+	Brokers []string `yaml:"brokers"`
+}
+
 type NormalDistribution struct {
 	Avg    float64 `yaml:"avg"`
 	Stddev float64 `yaml:"stddev"`
@@ -44,22 +48,23 @@ type Config struct {
 	// should be a value between 0 and 1
 	ProbabilityExpress float64 `yaml:"probability_express"`
 
-	// minimum shipping distance in metres
+	// minimum shipping distance in km
 	// we will only deal with packages going at least this far
 	// (in terms of linear distance between origin and destination)
-	MinShippingDistanceMetres float64 `yaml:"min_shipping_distance_metres"`
+	MinShippingDistanceKM float64 `yaml:"min_shipping_distance_km"`
 
-	// minimum air freight distance in metres
+	// minimum air freight distance in km
 	// we will send packages by air if the segment distance is larger than this value
-	MinAirFreightDistanceMetres float64 `yaml:"min_air_freight_distance_metres"`
+	MinAirFreightDistanceKM float64 `yaml:"min_air_freight_distance_km"`
 
-	// avg land speed in metres per hour
-	AvgLandSpeedMetreHours float64 `yaml:"avg_land_speed_metre_hours"`
+	// avg land speed in km/h
+	AvgLandSpeedKMPH float64 `yaml:"avg_land_speed_kmph"`
 
-	// avg air freight speed in metres per hour
-	AvgAirSpeedMetreHours float64 `yaml:"avg_air_speed_metre_hours"`
+	// avg air freight speed in km/h
+	AvgAirSpeedKMPH float64 `yaml:"avg_air_speed_kmph"`
 
 	Database DatabaseConfig `yaml:"database"`
+	Topics   TopicsConfig   `yaml:"topics"`
 }
 
 func ParseConfigs(filenames []string) (*Config, error) {

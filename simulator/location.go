@@ -6,7 +6,6 @@ import (
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/planar"
-	"github.com/paulmach/orb/project"
 	"github.com/paulmach/orb/quadtree"
 	"github.com/pkg/errors"
 )
@@ -32,7 +31,7 @@ func NewLocationFromDB(dbloc DBLocation) *Location {
 	return &Location{
 		LocationID: dbloc.LocationID,
 		Kind:       dbloc.Kind,
-		Position:   project.WGS84.ToMercator(orb.Point{dbloc.Longitude, dbloc.Latitude}),
+		Position:   NewPointFromWGS84(dbloc.Longitude, dbloc.Latitude),
 	}
 }
 

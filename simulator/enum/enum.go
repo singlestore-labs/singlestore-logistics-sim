@@ -10,16 +10,16 @@ const (
 type TransitionKind string
 
 const (
-	ArrivalScan   TransitionKind = "arrival scan"
-	DepartureScan TransitionKind = "departure scan"
+	ArrivalScan   TransitionKind = "arrival_scan"
+	DepartureScan TransitionKind = "departure_scan"
 	Delivered     TransitionKind = "delivered"
 )
 
 type PackageState string
 
 const (
-	AtRest    PackageState = "at rest"
-	InTransit PackageState = "in transit"
+	AtRest    PackageState = "at_rest"
+	InTransit PackageState = "in_transit"
 )
 
 type LocationKind string

@@ -92,9 +92,9 @@ CREATE TABLE package_transitions (
 
     kind ENUM (
         -- arrival scan means the package was received
-        'arrival scan',
+        'arrival_scan',
         -- departure scan means the package is enroute to another location
-        'departure scan',
+        'departure_scan',
         -- delivered means the package was successfully delivered
         'delivered'
     ) NOT NULL,
@@ -103,44 +103,124 @@ CREATE TABLE package_transitions (
     SHARD (packageid)
 );
 
-/*
+CREATE PIPELINE packages
+AS LOAD DATA KAFKA 'redpanda/packages'
+SKIP DUPLICATE KEY ERRORS
+INTO TABLE packages
+FORMAT AVRO (
+    packageid <- PackageID,
+    @received <- Received,
+    @delivery_estimate <- DeliveryEstimate,
+    origin_locationid <- OriginLocationID,
+    destination_locationid <- DestinationLocationID,
+    method <- Method,
+    lonlat <- Position
+)
+SCHEMA '{
+    "type": "record",
+    "name": "Package",
+    "fields": [
+        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+        { "name": "Received", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+        { "name": "DeliveryEstimate", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+        { "name": "OriginLocationID", "type": "long" },
+        { "name": "DestinationLocationID", "type": "long" },
+        { "name": "Method", "type": { "name": "Method", "type": "enum", "symbols": [
+            "standard", "express"
+        ] } },
+        { "name": "Position", "type": "string" }
+    ]
+}'
+SET
+    received = FROM_UNIXTIME(@received / 1000),
+    delivery_estimate = FROM_UNIXTIME(@delivery_estimate / 1000);
+
+START PIPELINE packages;
+
 DELIMITER //
 
-CREATE PROCEDURE process_package_states(batch QUERY(
-    packageid BINARY(16) NOT NULL,
-    locationid BINARY(16) NOT NULL,
-    created DATETIME(6) NOT NULL,
-    state TEXT NOT NULL
+CREATE OR REPLACE PROCEDURE process_transitions(batch QUERY(
+    packageid CHAR(36) NOT NULL,
+    seq INT NOT NULL,
+    locationid BIGINT NOT NULL,
+    next_locationid BIGINT,
+    recorded DATETIME NOT NULL,
+    kind TEXT NOT NULL
 ))
 AS
 BEGIN
-    INSERT INTO package_states (packageid, locationid, created, state) SELECT * FROM batch;
+    INSERT INTO package_transitions
+        (packageid, seq, locationid, next_locationid, recorded, kind)
+    SELECT * FROM batch;
+
+    UPDATE packages
+    INNER JOIN batch ON packages.packageid = batch.packageid
+    SET packages.delivered = batch.recorded
+    WHERE batch.kind = "delivered";
 END //
 
 DELIMITER ;
 
-CREATE PIPELINE package_states
-AS LOAD DATA KAFKA 'redpanda/package_states'
-INTO PROCEDURE process_package_states
+CREATE PIPELINE transitions
+AS LOAD DATA KAFKA 'redpanda/transitions'
+INTO PROCEDURE process_transitions
 FORMAT AVRO (
-    @packageid <- packageid,
-    @locationid <- locationid,
-    created <- created,
-    state <- state
+    packageid <- PackageID,
+    seq <- Seq,
+    locationid <- LocationID,
+    next_locationid <- NextLocationID,
+    @recorded <- Recorded,
+    kind <- Kind
 )
 SCHEMA '{
     "type": "record",
-    "name": "data",
+    "name": "PackageTransition",
     "fields": [
-        { "name": "packageid", "type": "string" },
-        { "name": "locationid", "type": "string" },
-        { "name": "created", "type": "string" },
-        { "name": "state", "type": "string" }
+        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+        { "name": "Seq", "type": "int" },
+        { "name": "LocationID", "type": "long" },
+        { "name": "NextLocationID", "type": ["null", "long"] },
+        { "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+        { "name": "Kind", "type": { "name": "Kind", "type": "enum", "symbols": [
+            "arrival_scan", "departure_scan", "delivered"
+        ] } }
     ]
 }'
 SET
-    packageid = UNHEX(@packageid),
-    locationid = UNHEX(@locationid);
+    recorded = FROM_UNIXTIME(@recorded / 1000);
 
-START PIPELINE package_states;
-*/
+START PIPELINE transitions;
+
+DELIMITER //
+
+CREATE OR REPLACE PROCEDURE process_locations(batch QUERY(
+    packageid CHAR(36) NOT NULL,
+    position GEOGRAPHYPOINT NOT NULL
+))
+AS
+BEGIN
+    UPDATE packages
+    INNER JOIN batch ON packages.packageid = batch.packageid
+    SET packages.lonlat = batch.position;
+END //
+
+DELIMITER ;
+
+CREATE PIPELINE locations
+AS LOAD DATA KAFKA 'redpanda/locations'
+INTO PROCEDURE process_locations
+FORMAT AVRO (
+    packageid <- PackageID,
+    position <- Position
+)
+SCHEMA '{
+    "type": "record",
+    "name": "Track",
+    "fields": [
+        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+        { "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+        { "name": "Position", "type": "string" }
+    ]
+}';
+
+START PIPELINE locations;

@@ -15,6 +15,7 @@ import (
 type Database interface {
 	Locations() ([]DBLocation, error)
 	ActivePackages() ([]DBActivePackage, error)
+	Close() error
 }
 
 type DBLocation struct {
@@ -114,9 +115,14 @@ func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
 			pt.locationid AS transitionlocationid,
 			pt.next_locationid AS transitionnextlocationid
 		FROM packages p
-		LEFT JOIN (
+		INNER JOIN (
 			SELECT *, ROW_NUMBER() OVER (PARTITION BY packageid ORDER BY seq desc) AS rownum
 			FROM package_transitions
-		) pt ON p.packageid = pt.packageid AND rownum = 1;
+		) pt ON p.packageid = pt.packageid AND rownum = 1
+		WHERE p.delivered IS NULL
 	`)
+}
+
+func (s *SingleStore) Close() error {
+	return s.db.Close()
 }

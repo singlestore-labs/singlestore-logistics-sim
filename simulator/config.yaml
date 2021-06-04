@@ -13,7 +13,7 @@ max_delivered: 100_000
 # number of packages to generate per tick
 packages_per_tick:
   avg: 5000
-  stddev: 2000
+  stddev: 3000
 
 # how long packages should take to be processed
 hours_at_rest:
@@ -21,19 +21,19 @@ hours_at_rest:
   stddev: 2
 
 # probability a package is shipped "express"
-probability_express: 0.5
+probability_express: 0.35
 
 # only care about shipping packages at least this far
-min_shipping_distance_metres: 100_000
+min_shipping_distance_km: 100
 
 # air freight is pricy - make sure a segment is far enough
-min_air_freight_distance_metres: 2_000_000
+min_air_freight_distance_km: 2000
 
 # average land speed
-avg_land_speed_metre_hours: 50_000
+avg_land_speed_kmph: 50
 
 # average air speed
-avg_air_speed_metre_hours: 750_000
+avg_air_speed_kmph: 750
 
 database:
   host: singlestore
@@ -41,3 +41,7 @@ database:
   username: root
   password: root
   database: logistics
+
+topics:
+  brokers:
+    - redpanda

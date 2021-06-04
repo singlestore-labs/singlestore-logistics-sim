@@ -17,6 +17,23 @@ type Package struct {
 	DestinationLocationID int64
 	DeliveryEstimate      time.Time
 	Method                enum.DeliveryMethod
+	Position              AvroPoint
+}
+
+type Transition struct {
+	PackageID      uuid.UUID
+	Seq            int
+	LocationID     int64
+	NextLocationID int64
+	Recorded       time.Time
+	Kind           enum.TransitionKind
+}
+
+// LocationRecord is only used when writing to the locations topic
+type LocationRecord struct {
+	PackageID uuid.UUID
+	Recorded  time.Time
+	Position  AvroPoint
 }
 
 type Tracker struct {
@@ -36,8 +53,8 @@ type Tracker struct {
 
 	// The following fields are updated when a package is in transit
 
-	// SpeedKPH tracks the package's current speed (kilometres per hour) while in transit
-	SpeedKPH int
+	// SpeedKMPH tracks the package's current speed (kilometres/h) while in transit
+	SpeedKMPH int
 	// Position tracks the package's current location while in transit
 	Position orb.Point
 	// NextLocationID tracks the package's next location
@@ -54,7 +71,7 @@ func NewTrackersFromActivePackages(c *Config, l *LocationIndex, packages []DBAct
 			pkgState = enum.InTransit
 		}
 
-		currentPosition := orb.Point{pkg.Longitude, pkg.Latitude}
+		currentPosition := NewPointFromWGS84(pkg.Longitude, pkg.Latitude)
 
 		segmentStart, err := l.Lookup(pkg.TransitionLocationID)
 		if err != nil {
@@ -64,10 +81,10 @@ func NewTrackersFromActivePackages(c *Config, l *LocationIndex, packages []DBAct
 		if err != nil {
 			return nil, err
 		}
-		segmentDistance := planar.Distance(segmentStart.Position, segmentEnd.Position)
-		speed := c.AvgLandSpeedMetreHours
-		if segmentDistance > c.MinAirFreightDistanceMetres {
-			speed = c.AvgAirSpeedMetreHours
+		segmentDistance := planar.Distance(segmentStart.Position, segmentEnd.Position) / 1000
+		speed := c.AvgLandSpeedKMPH
+		if segmentDistance > c.MinAirFreightDistanceKM {
+			speed = c.AvgAirSpeedKMPH
 		}
 
 		t := Tracker{
@@ -83,7 +100,7 @@ func NewTrackersFromActivePackages(c *Config, l *LocationIndex, packages []DBAct
 			// we don't set nextTransitionTime which will cause the package to
 			// immediately transition if it is currently AtRest
 
-			SpeedKPH:             int(speed / 1000),
+			SpeedKMPH:            int(speed),
 			Position:             currentPosition,
 			NextLocationID:       pkg.TransitionNextLocationID,
 			NextLocationPosition: segmentEnd.Position,

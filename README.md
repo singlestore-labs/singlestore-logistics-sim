@@ -20,7 +20,7 @@ The [simulator](simulator) is a go program which generates package histories and
 
 There are three topics:
  - packages
- - package_states
+ - transitions
  - tracking
 
 ## packages topic
@@ -34,21 +34,22 @@ The packages topic contains a record per package. The record is written when we 
     "type": "record",
     "name": "Package",
     "fields": [
-        { "name": "PackageID", "type": "string", "logicalType": "uuid" },
-        { "name": "Received", "type": "long", "logicalType": "timestamp-millis" },
-        { "name": "DeliveryEstimate", "type": "long", "logicalType": "timestamp-millis" },
+        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+        { "name": "Received", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+        { "name": "DeliveryEstimate", "type": { "type": "long", "logicalType": "timestamp-millis" } },
         { "name": "OriginLocationID", "type": "long" },
         { "name": "DestinationLocationID", "type": "long" },
-        { "name": "Method", "type": "enum", "symbols": [
+        { "name": "Method", "type": { "name": "Method", "type": "enum", "symbols": [
             "standard", "express"
-        ] },
+        ] } },
+        { "name": "Position", "type": "string" }
     ]
 }
 ```
 
-## package_transitions topic
+## transitions topic
 
-The package_transitions topic is written to whenever a package changes states. A normal package goes through the following transitions during it's lifetime:
+The transitions topic is written to whenever a package changes states. A normal package goes through the following transitions during it's lifetime:
 
 1. arrival scan - the package has been received
 2. departure scan - the package has been scanned and put in transit to another location
@@ -64,14 +65,14 @@ The package_transitions topic is written to whenever a package changes states. A
     "type": "record",
     "name": "PackageTransition",
     "fields": [
-        { "name": "PackageID", "type": "string", "logicalType": "uuid" },
+        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
         { "name": "Seq", "type": "int" },
         { "name": "LocationID", "type": "long" },
         { "name": "NextLocationID", "type": ["null", "long"] },
-        { "name": "Recorded", "type": "long", "logicalType": "timestamp-millis" },
-        { "name": "Kind", "type": "enum", "symbols": [
-            "arrival scan", "departure scan", "delivered"
-        ] }
+        { "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+        { "name": "Kind", "type": { "name": "Kind", "type": "enum", "symbols": [
+            "arrival_scan", "departure_scan", "delivered"
+        ] } }
     ]
 }
 ```
@@ -87,9 +88,9 @@ The tracking topic is written to as packages move in real time.
     "type": "record",
     "name": "Track",
     "fields": [
-        { "name": "PackageID", "type": "string", "logicalType": "uuid" },
-        { "name": "Recorded", "type": "long", "logicalType": "timestamp-millis" },
-        { "name": "Longitude", "type": "double" },
-        { "name": "Latitude", "type": "double" },
+        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+        { "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+        { "name": "Position", "type": "string" }
     ]
+}
 ```

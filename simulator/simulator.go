@@ -24,6 +24,10 @@ type State struct {
 	Clock     *Clock
 	Trackers  []Tracker
 	Locations *LocationIndex
+	Topics    Topics
+
+	// CloseCh should be closed to stop the Simulation
+	CloseCh chan struct{}
 
 	Verbose int
 
@@ -32,18 +36,21 @@ type State struct {
 	PackagesPerTick                  *distuv.Normal
 	HoursAtRest                      *distuv.Normal
 	ProbabilityExpress               float64
-	MinShippingDistanceMetres        float64
+	MinShippingDistanceKM            float64
 	MinShippingDistanceMetresSquared float64
-	MinAirFreightDistanceMetres      float64
-	AvgLandSpeedMetreHours           float64
-	AvgAirSpeedMetreHours            float64
+	MinAirFreightDistanceKM          float64
+	AvgLandSpeedKMPH                 float64
+	AvgAirSpeedKMPH                  float64
 }
 
-func NewState(c *Config, locations *LocationIndex, initialTrackers []Tracker) *State {
+func NewState(c *Config, locations *LocationIndex, topics Topics, initialTrackers []Tracker) *State {
 	return &State{
 		Clock:     NewClock(c.StartTime, c.TickDuration),
 		Trackers:  initialTrackers,
 		Locations: locations,
+		Topics:    topics,
+
+		CloseCh: make(chan struct{}),
 
 		Verbose: c.Verbose,
 
@@ -52,11 +59,11 @@ func NewState(c *Config, locations *LocationIndex, initialTrackers []Tracker) *S
 		PackagesPerTick:                  c.PackagesPerTick.ToDist(),
 		HoursAtRest:                      c.HoursAtRest.ToDist(),
 		ProbabilityExpress:               c.ProbabilityExpress,
-		MinShippingDistanceMetres:        c.MinShippingDistanceMetres,
-		MinShippingDistanceMetresSquared: c.MinShippingDistanceMetres * c.MinShippingDistanceMetres,
-		MinAirFreightDistanceMetres:      c.MinAirFreightDistanceMetres,
-		AvgLandSpeedMetreHours:           c.AvgLandSpeedMetreHours,
-		AvgAirSpeedMetreHours:            c.AvgAirSpeedMetreHours,
+		MinShippingDistanceKM:            c.MinShippingDistanceKM,
+		MinShippingDistanceMetresSquared: c.MinShippingDistanceKM * 1000 * c.MinShippingDistanceKM * 1000,
+		MinAirFreightDistanceKM:          c.MinAirFreightDistanceKM,
+		AvgLandSpeedKMPH:                 c.AvgLandSpeedKMPH,
+		AvgAirSpeedKMPH:                  c.AvgAirSpeedKMPH,
 	}
 }
 
@@ -128,6 +135,12 @@ func Simulate(state *State) {
 		if state.MaxDelivered > 0 && totalDelivered >= state.MaxDelivered {
 			return
 		}
+
+		select {
+		case <-state.CloseCh:
+			return
+		default:
+		}
 	}
 }
 
@@ -149,7 +162,7 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 			if candidate == origin {
 				return false
 			}
-			// we only deliver packages which travel farther than MinShippingDistanceMetres
+			// we only deliver packages which travel farther than MinShippingDistanceKM
 			return planar.DistanceSquared(origin.Position, candidate.Position) > state.MinShippingDistanceMetresSquared
 		})
 		if err != nil {
@@ -157,10 +170,10 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 		}
 
 		// extremely crude delivery estimate calculation
-		distance := planar.Distance(origin.Position, destination.Position)
-		avgSpeed := state.AvgLandSpeedMetreHours
+		distance := planar.Distance(origin.Position, destination.Position) / 1000
+		avgSpeed := state.AvgLandSpeedKMPH
 		if method == enum.Express {
-			avgSpeed = state.AvgAirSpeedMetreHours
+			avgSpeed = state.AvgAirSpeedKMPH
 		}
 		// include an overhead buffer of 20% due to processing delays per transit point
 		hours := (distance / avgSpeed) * 1.2
@@ -173,6 +186,12 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 			DestinationLocationID: destination.LocationID,
 			DeliveryEstimate:      deliveryEstimate,
 			Method:                method,
+			Position:              AvroPoint(origin.Position),
+		}
+
+		err = state.Topics.WritePackage(&pkg)
+		if err != nil {
+			log.Panicf("failed to write package to topic: %v", err)
 		}
 
 		nextTransitionTime := now.Add(time.Hour * time.Duration(state.HoursAtRest.Rand()))
@@ -191,10 +210,10 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 		})
 
 		if state.Verbose >= VerboseInfo {
-			log.Printf("CreatePackage(%s): origin(%f, %f) destination(%f, %f) method(%s) distance(%f)",
+			log.Printf("CreatePackage(%s): origin(%s) destination(%s) method(%s) distance(%f)",
 				pkg.PackageID.String()[:8],
-				origin.Position.Lon(), origin.Position.Lat(),
-				destination.Position.Lon(), destination.Position.Lat(),
+				AvroPoint(origin.Position),
+				AvroPoint(destination.Position),
 				method, distance)
 		}
 
@@ -215,7 +234,7 @@ func UpdatePosition(state *State, t *Tracker, delta time.Duration) bool {
 
 	// calculate the maximum distance this package could have gone in the time
 	// that has passed based on this package's current speed
-	maxDistance := float64(t.SpeedKPH*1000) * delta.Hours()
+	maxDistance := float64(t.SpeedKMPH*1000) * delta.Hours()
 
 	reachedDestination := false
 
@@ -231,13 +250,19 @@ func UpdatePosition(state *State, t *Tracker, delta time.Duration) bool {
 		}
 	}
 
-	// TODO: submit location to locations topic
 	if state.Verbose >= VerboseSilly {
-		log.Printf("UpdatePosition(%s): loc(%f, %f) target(%f, %f) travelled(%f)",
+		log.Printf("UpdatePosition(%s): loc(%s) target(%s) travelled(%gkm) remaining(%gkm)",
 			t.PackageID.String()[:8],
-			t.Position.Lon(), t.Position.Lat(),
-			t.NextLocationPosition.Lon(), t.NextLocationPosition.Lat(),
-			math.Min(maxDistance, distanceRemaining))
+			AvroPoint(t.Position),
+			AvroPoint(t.NextLocationPosition),
+			math.Min(maxDistance/1000, distanceRemaining/1000),
+			distanceRemaining/1000,
+		)
+	}
+
+	err := state.Topics.WriteLocation(state.Clock.Now(), t)
+	if err != nil {
+		log.Panicf("failed to write location to topic: %v", err)
 	}
 
 	return reachedDestination
@@ -259,10 +284,10 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 
 	nextLocation := state.Locations.NextLocation(currentLocation, destinationLocation, t.Method)
 
-	distanceToNext := planar.Distance(currentLocation.Position, nextLocation.Position)
-	speed := state.AvgLandSpeedMetreHours
-	if distanceToNext > state.MinAirFreightDistanceMetres {
-		speed = state.AvgAirSpeedMetreHours
+	distanceToNext := planar.Distance(currentLocation.Position, nextLocation.Position) / 1000
+	speed := state.AvgLandSpeedKMPH
+	if distanceToNext > state.MinAirFreightDistanceKM {
+		speed = state.AvgAirSpeedKMPH
 	}
 
 	// update tracker state fields
@@ -271,19 +296,23 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 	t.LastLocationID = currentLocation.LocationID
 
 	// update tracker InTransit fields
-	t.SpeedKPH = int(speed / 1000)
+	t.SpeedKMPH = int(speed)
 	t.Position = currentLocation.Position
 	t.NextLocationID = nextLocation.LocationID
 	t.NextLocationPosition = nextLocation.Position
 
-	// TODO: submit departure scan to transition topic
 	if state.Verbose >= VerboseInfo {
-		log.Printf("DepartureScan(%s): loc(%f, %f) speed(%d) target(%f, %f) dist(%f)",
+		log.Printf("DepartureScan(%s): loc(%s) speed(%d) target(%s) dist(%f)",
 			t.PackageID.String()[:8],
-			currentLocation.Position.Lon(), currentLocation.Position.Lat(),
-			t.SpeedKPH,
-			nextLocation.Position.Lon(), nextLocation.Position.Lat(),
+			AvroPoint(currentLocation.Position),
+			t.SpeedKMPH,
+			AvroPoint(nextLocation.Position),
 			distanceToNext)
+	}
+
+	err = state.Topics.WriteTransition(state.Clock.Now(), enum.DepartureScan, t)
+	if err != nil {
+		log.Panicf("failed to write transition to topic: %v", err)
 	}
 }
 
@@ -301,17 +330,21 @@ func TriggerArrivalScan(state *State, t *Tracker) {
 	now := state.Clock.Now()
 	t.NextTransitionTime = now.Add(time.Hour * time.Duration(state.HoursAtRest.Rand()))
 
-	// TODO: submit arrival scan to transition topic
 	if state.Verbose >= VerboseInfo {
 		currentLocation, err := state.Locations.Lookup(t.LastLocationID)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		log.Printf("ArrivalScan(%s): loc(%f, %f) nextTransition(%s)",
+		log.Printf("ArrivalScan(%s): loc(%s) nextTransition(%s)",
 			t.PackageID.String()[:8],
-			currentLocation.Position.Lon(), currentLocation.Position.Lat(),
+			AvroPoint(currentLocation.Position),
 			t.NextTransitionTime.Sub(now))
+	}
+
+	err := state.Topics.WriteTransition(now, enum.ArrivalScan, t)
+	if err != nil {
+		log.Panicf("failed to write transition to topic: %v", err)
 	}
 }
 
@@ -326,15 +359,19 @@ func TriggerDelivered(state *State, t *Tracker) {
 	t.Seq = t.Seq + 1
 	t.LastLocationID = t.NextLocationID
 
-	// TODO: submit delivered to transition topic
 	if state.Verbose >= VerboseInfo {
 		currentLocation, err := state.Locations.Lookup(t.LastLocationID)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		log.Printf("Delivered(%s): loc(%f, %f)",
+		log.Printf("Delivered(%s): loc(%s)",
 			t.PackageID.String()[:8],
-			currentLocation.Position.Lon(), currentLocation.Position.Lat())
+			AvroPoint(currentLocation.Position))
+	}
+
+	err := state.Topics.WriteTransition(state.Clock.Now(), enum.Delivered, t)
+	if err != nil {
+		log.Panicf("failed to write transition to topic: %v", err)
 	}
 }

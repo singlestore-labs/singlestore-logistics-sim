@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"os/signal"
 	"runtime/pprof"
 	"simulator"
 	"time"
@@ -21,12 +22,6 @@ func (f *FlagStringSlice) Set(value string) error {
 	*f = append(*f, value)
 	return nil
 }
-
-// TODO: find a kafka producer
-// https://github.com/ORBAT/krater/ looks promising
-
-// use github.com/hamba/avro
-// Encoder to setup avro writing for each of the topics
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -67,6 +62,7 @@ func main() {
 	}
 
 	// TODO: serve grafana metrics
+	// https://github.com/rcrowley/go-metrics
 
 	var db simulator.Database
 	for {
@@ -78,6 +74,19 @@ func main() {
 		}
 		break
 	}
+	defer db.Close()
+
+	var topics simulator.Topics
+	for {
+		topics, err = simulator.NewRedpanda(config.Topics)
+		if err != nil {
+			log.Printf("unable to connect to Redpanda: %s; retrying...", err)
+			time.Sleep(time.Second)
+			continue
+		}
+		break
+	}
+	defer topics.Close()
 
 	locations, err := db.Locations()
 	if err != nil {
@@ -98,7 +107,16 @@ func main() {
 		log.Fatalf("unable to download locations from SingleStore: %+v", err)
 	}
 
-	state := simulator.NewState(config, index, trackers)
+	state := simulator.NewState(config, index, topics, trackers)
+
+	// Trap SIGINT to trigger a shutdown.
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+
+	go func() {
+		<-signals
+		close(state.CloseCh)
+	}()
 
 	simulator.Simulate(state)
 }
