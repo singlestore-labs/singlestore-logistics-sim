@@ -8,13 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/pkg/errors"
-	"gopkg.in/Shopify/sarama.v1"
 )
 
 func NewSaramaConfig() *sarama.Config {
 	config := sarama.NewConfig()
-	config.Version = sarama.V2_1_0_0
+	config.Version = sarama.V2_4_0_0
 
 	timeout := 2 * time.Second
 
