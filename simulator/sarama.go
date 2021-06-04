@@ -10,6 +10,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/pkg/errors"
+	"github.com/rcrowley/go-metrics"
 )
 
 func NewSaramaConfig() *sarama.Config {
@@ -25,6 +26,8 @@ func NewSaramaConfig() *sarama.Config {
 
 	config.Producer.Return.Successes = false
 	config.Producer.Return.Errors = true
+
+	config.MetricRegistry = metrics.NewPrefixedChildRegistry(metrics.DefaultRegistry, "sarama.")
 
 	return config
 }

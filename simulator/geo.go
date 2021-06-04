@@ -3,6 +3,7 @@ package simulator
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/project"
@@ -37,5 +38,7 @@ func (p AvroPoint) MarshalText() ([]byte, error) {
 
 func (p AvroPoint) String() string {
 	out := project.Mercator.ToWGS84(orb.Point(p))
-	return fmt.Sprintf("POINT(%g %g)", out[0], out[1])
+	// would prefer to use %g but singlestore doesn't support scientific precision in numbers
+	// using %f results in fixed width floats
+	return fmt.Sprintf("POINT(%s %s)", strconv.FormatFloat(out[0], 'f', -1, 64), strconv.FormatFloat(out[1], 'f', -1, 64))
 }

@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: singlestore-logistics-sim
+    orgId: 1
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    # to update a dashboard use "Save JSON to file" and wait for this provider to sync
+    allowUiUpdates: false
+    options:
+      path: /dashboards
+      foldersFromFilesStructure: true

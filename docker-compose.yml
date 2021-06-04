@@ -30,8 +30,9 @@ services:
     volumes:
       # persist data between runs:
       - /var/lib/memsql
-      - ./schema.sql:/init.sql
-      - ./data:/data
+      - ./schema.sql:/init.sql:ro
+      - ./data:/data:ro
+      - ./data/metrics/singlestore_exporter.cnf:/etc/memsql/memsql_exporter.cnf:ro
     ports:
       - 3306:3306
       - 8080:8080
@@ -44,3 +45,27 @@ services:
     container_name: simulator
     volumes:
       - ./simulator:/go/src/simulator
+    ports:
+      - 9000:9000
+  prometheus:
+    image: prom/prometheus:v2.27.1
+    container_name: prometheus
+    volumes:
+      - ./data/metrics/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - 9090:9090
+  grafana:
+    image: grafana/grafana:7.5.7
+    container_name: grafana
+    environment:
+      - GF_USERS_DEFAULT_THEME=light
+      - GF_SECURITY_ADMIN_USER=root
+      - GF_SECURITY_ADMIN_PASSWORD=root
+      - "GF_INSTALL_PLUGINS=grafana-worldmap-panel,https://github.com/WilliamVenner/grafana-timepicker-buttons/releases/download/v4.1.1/williamvenner-timepickerbuttons-panel-4.1.1.zip;grafana-timepicker-buttons"
+    volumes:
+      - /var/lib/grafana
+      - ./data/metrics/dashboards:/dashboards:ro
+      - ./data/metrics/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/all.yaml:ro
+      - ./data/metrics/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/all.yaml:ro
+    ports:
+      - 3000:3000

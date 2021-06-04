@@ -33,12 +33,14 @@ CREATE TABLE packages (
     -- updated while the package moves in real-time between different locations
     lonlat GEOGRAPHYPOINT NOT NULL,
 
-    -- updated automatically keeps track of when this row was last changed
-    updated DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    -- marks when this row was last changed
+    updated DATETIME NOT NULL,
 
     PRIMARY KEY (packageid),
     INDEX (lonlat),
-    INDEX (updated)
+    INDEX (received),
+    INDEX (updated),
+    INDEX (delivered)
 );
 
 CREATE REFERENCE TABLE locations (
@@ -100,7 +102,9 @@ CREATE TABLE package_transitions (
     ) NOT NULL,
 
     PRIMARY KEY (packageid, seq),
-    SHARD (packageid)
+    SHARD (packageid),
+    INDEX (recorded),
+    INDEX (kind)
 );
 
 CREATE PIPELINE packages
@@ -132,8 +136,9 @@ SCHEMA '{
     ]
 }'
 SET
-    received = FROM_UNIXTIME(@received / 1000),
-    delivery_estimate = FROM_UNIXTIME(@delivery_estimate / 1000);
+    received = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@received / 1000) SECOND),
+    updated = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@received / 1000) SECOND),
+    delivery_estimate = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@delivery_estimate / 1000) SECOND);
 
 START PIPELINE packages;
 
@@ -149,13 +154,15 @@ CREATE OR REPLACE PROCEDURE process_transitions(batch QUERY(
 ))
 AS
 BEGIN
-    INSERT INTO package_transitions
+    REPLACE INTO package_transitions
         (packageid, seq, locationid, next_locationid, recorded, kind)
     SELECT * FROM batch;
 
     UPDATE packages
     INNER JOIN batch ON packages.packageid = batch.packageid
-    SET packages.delivered = batch.recorded
+    SET
+        packages.delivered = batch.recorded,
+        packages.updated = batch.recorded
     WHERE batch.kind = "delivered";
 END //
 
@@ -187,7 +194,7 @@ SCHEMA '{
     ]
 }'
 SET
-    recorded = FROM_UNIXTIME(@recorded / 1000);
+    recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND);
 
 START PIPELINE transitions;
 
@@ -195,13 +202,16 @@ DELIMITER //
 
 CREATE OR REPLACE PROCEDURE process_locations(batch QUERY(
     packageid CHAR(36) NOT NULL,
-    position GEOGRAPHYPOINT NOT NULL
+    position GEOGRAPHYPOINT NOT NULL,
+    recorded DATETIME NOT NULL
 ))
 AS
 BEGIN
     UPDATE packages
     INNER JOIN batch ON packages.packageid = batch.packageid
-    SET packages.lonlat = batch.position;
+    SET
+        packages.lonlat = batch.position,
+        packages.updated = batch.recorded;
 END //
 
 DELIMITER ;
@@ -211,7 +221,8 @@ AS LOAD DATA KAFKA 'redpanda/locations'
 INTO PROCEDURE process_locations
 FORMAT AVRO (
     packageid <- PackageID,
-    position <- Position
+    position <- Position,
+    @recorded <- Recorded
 )
 SCHEMA '{
     "type": "record",
@@ -221,6 +232,8 @@ SCHEMA '{
         { "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
         { "name": "Position", "type": "string" }
     ]
-}';
+}'
+SET
+    recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND);
 
 START PIPELINE locations;

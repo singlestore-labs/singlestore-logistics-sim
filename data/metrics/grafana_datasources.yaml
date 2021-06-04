@@ -1,0 +1,23 @@
+apiVersion: 1
+
+datasources:
+  - name: prometheus
+    access: proxy
+    editable: false
+    isDefault: true
+    type: prometheus
+    url: 'http://prometheus:9090'
+    version: 1
+    jsonData:
+      timeInterval: 5s
+  - name: singlestore
+    editable: false
+    type: mysql
+    url: singlestore:3306
+    database: logistics
+    user: root
+    version: 1
+    jsonData:
+      timeInterval: 5s
+    secureJsonData:
+      password: root

@@ -20,6 +20,10 @@ type TopicsConfig struct {
 	Brokers []string `yaml:"brokers"`
 }
 
+type MetricsConfig struct {
+	Port int `yaml:"port"`
+}
+
 type NormalDistribution struct {
 	Avg    float64 `yaml:"avg"`
 	Stddev float64 `yaml:"stddev"`
@@ -34,6 +38,9 @@ func (n *NormalDistribution) ToDist() *distuv.Normal {
 
 type Config struct {
 	Verbose int `yaml:"verbose"`
+
+	// how fast does the simulator run?  0 means as fast as possible
+	SimInterval time.Duration `yaml:"sim_interval"`
 
 	StartTime    time.Time     `yaml:"start_time"`
 	TickDuration time.Duration `yaml:"tick_duration"`
@@ -65,12 +72,12 @@ type Config struct {
 
 	Database DatabaseConfig `yaml:"database"`
 	Topics   TopicsConfig   `yaml:"topics"`
+	Metrics  MetricsConfig  `yaml:"metrics"`
 }
 
 func ParseConfigs(filenames []string) (*Config, error) {
 	// initialize with default values
 	cfg := Config{
-		StartTime:    time.Now(),
 		TickDuration: time.Hour,
 	}
 

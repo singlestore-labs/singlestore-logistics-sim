@@ -61,8 +61,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	// TODO: serve grafana metrics
-	// https://github.com/rcrowley/go-metrics
+	go simulator.ExportMetrics(config.Metrics)
 
 	var db simulator.Database
 	for {
@@ -87,6 +86,20 @@ func main() {
 		break
 	}
 	defer topics.Close()
+
+	if config.StartTime.IsZero() {
+		start, err := db.CurrentTime()
+		if err != nil {
+			log.Fatalf("unable to read current time from SingleStore: %+v", err)
+		}
+		if start != nil {
+			config.StartTime = *start
+		} else {
+			config.StartTime = time.Now()
+		}
+	}
+
+	log.Printf("starting simulation at %s", config.StartTime)
 
 	locations, err := db.Locations()
 	if err != nil {

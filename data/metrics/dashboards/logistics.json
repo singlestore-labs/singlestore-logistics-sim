@@ -1,0 +1,650 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "links": [],
+    "panels": [
+        {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": "singlestore",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+                "h": 9,
+                "w": 18,
+                "x": 0,
+                "y": 0
+            },
+            "hiddenSeries": false,
+            "id": 4,
+            "legend": {
+                "avg": false,
+                "current": false,
+                "max": false,
+                "min": false,
+                "show": true,
+                "total": false,
+                "values": false
+            },
+            "lines": true,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+                "alertThreshold": true
+            },
+            "percentage": false,
+            "pluginVersion": "7.5.7",
+            "pointradius": 2,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+                {
+                    "format": "time_series",
+                    "group": [],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  $__timeGroupAlias(recorded, '1h'),\n  kind as metric,\n  count(*) as value\nFROM package_transitions\nwhere\n  $__timeFilter(recorded)\ngroup by 1, 2\nORDER BY 1",
+                    "refId": "A",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeRegions": [],
+            "timeShift": null,
+            "title": "package transitions",
+            "tooltip": {
+                "shared": true,
+                "sort": 0,
+                "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+                "buckets": null,
+                "mode": "time",
+                "name": null,
+                "show": true,
+                "values": []
+            },
+            "yaxes": [
+                {
+                    "format": "short",
+                    "label": null,
+                    "logBase": 1,
+                    "max": null,
+                    "min": null,
+                    "show": true
+                },
+                {
+                    "format": "short",
+                    "label": null,
+                    "logBase": 1,
+                    "max": null,
+                    "min": null,
+                    "show": true
+                }
+            ],
+            "yaxis": {
+                "align": false,
+                "alignLevel": null
+            }
+        },
+        {
+            "datasource": "singlestore",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 9,
+                "w": 3,
+                "x": 18,
+                "y": 0
+            },
+            "id": 11,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "mean"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "text": {},
+                "textMode": "auto"
+            },
+            "pluginVersion": "7.5.7",
+            "targets": [
+                {
+                    "exemplar": true,
+                    "expr": "memsql_info_schema_table_statistics_rows",
+                    "format": "time_series",
+                    "group": [
+                        {
+                            "params": [
+                                "$__interval",
+                                "none"
+                            ],
+                            "type": "time"
+                        }
+                    ],
+                    "interval": "",
+                    "legendFormat": "{{table}} rowcount",
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  $__timeGroupAlias(received,'1d'),\n  count(*) AS \"new packages\"\nFROM packages\nWHERE\n  $__timeFilter(received)\nGROUP BY 1\nORDER BY 1",
+                    "refId": "A",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "*"
+                                ],
+                                "type": "column"
+                            },
+                            {
+                                "params": [
+                                    "count"
+                                ],
+                                "type": "aggregate"
+                            },
+                            {
+                                "params": [
+                                    "count"
+                                ],
+                                "type": "alias"
+                            }
+                        ]
+                    ],
+                    "table": "packages",
+                    "timeColumn": "received",
+                    "timeColumnType": "datetime",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                },
+                {
+                    "format": "time_series",
+                    "group": [],
+                    "hide": false,
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  $__timeGroupAlias(delivered,'1d'),\n  count(*) AS \"delivered packages\"\nFROM packages\nWHERE\n  $__timeFilter(delivered)\nGROUP BY 1\nORDER BY 1",
+                    "refId": "B",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Average volume by day",
+            "type": "stat"
+        },
+        {
+            "datasource": "singlestore",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 3,
+                "x": 21,
+                "y": 0
+            },
+            "id": 6,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/.*/",
+                    "values": false
+                },
+                "text": {},
+                "textMode": "value"
+            },
+            "pluginVersion": "7.5.7",
+            "targets": [
+                {
+                    "format": "table",
+                    "group": [],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "select\n  date_format(max(updated), '%Y-%m-%d %H:%i') as 'now'\nfrom packages;",
+                    "refId": "A",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                }
+            ],
+            "title": "Simulation Clock",
+            "type": "stat"
+        },
+        {
+            "datasource": "singlestore",
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 3,
+                "x": 21,
+                "y": 4
+            },
+            "id": 9,
+            "options": {
+                "buttonTextOption": "button_text",
+                "displayButtonsHorizontal": false,
+                "displayStyle": "button",
+                "primaryFieldOption": "primary",
+                "primaryFieldValueOption": "1",
+                "timeFromOption": "time_from",
+                "timeToOption": "time_to"
+            },
+            "pluginVersion": "7.5.7",
+            "targets": [
+                {
+                    "format": "table",
+                    "group": [],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "select\n  unix_timestamp(min(updated)) as time_from,\n  unix_timestamp(date_add(max(updated), interval 1 week)) as time_to,\n  \"all data\" as button_text\nfrom packages;",
+                    "refId": "A",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                },
+                {
+                    "format": "table",
+                    "group": [],
+                    "hide": false,
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "select\n  unix_timestamp(date_sub(max(updated), interval 1 month)) as time_from,\n  unix_timestamp(date_add(max(updated), interval 1 week)) as time_to,\n  \"last month\" as button_text\nfrom packages;",
+                    "refId": "B",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                },
+                {
+                    "format": "table",
+                    "group": [],
+                    "hide": false,
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "select\n  unix_timestamp(date_sub(max(updated), interval 1 week)) as time_from,\n  unix_timestamp(date_add(max(updated), interval 2 day)) as time_to,\n  \"last week\" as button_text\nfrom packages;",
+                    "refId": "C",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                }
+            ],
+            "title": "Time Selector",
+            "type": "williamvenner-timepickerbuttons-panel"
+        },
+        {
+            "circleMaxSize": "10",
+            "circleMinSize": "1",
+            "colors": [
+                "#8AB8FF",
+                "#56A64B",
+                "#F2CC0C",
+                "#FF780A",
+                "#E02F44",
+                "#A352CC"
+            ],
+            "datasource": "singlestore",
+            "decimals": 0,
+            "esMetric": "Count",
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 13,
+                "w": 12,
+                "x": 0,
+                "y": 9
+            },
+            "hideEmpty": false,
+            "hideZero": false,
+            "id": 10,
+            "initialZoom": 1,
+            "locationData": "table",
+            "mapCenter": "(0°, 0°)",
+            "mapCenterLatitude": 0,
+            "mapCenterLongitude": 0,
+            "maxDataPoints": 1,
+            "mouseWheelZoom": true,
+            "pluginVersion": "7.5.7",
+            "showLegend": true,
+            "stickyLabels": false,
+            "tableQueryOptions": {
+                "geohashField": "geohash",
+                "labelField": "name",
+                "latitudeField": "latitude",
+                "longitudeField": "longitude",
+                "metricField": "metric",
+                "queryType": "coordinates"
+            },
+            "targets": [
+                {
+                    "format": "table",
+                    "group": [],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "with\n    active_packages as (\n        select p.packageid, pt.next_locationid, pt.seq\n        from packages p\n        inner join package_transitions pt on p.packageid = pt.packageid\n        where p.delivered is null and pt.kind = 'departure_scan'\n    )\nselect\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN (\n    SELECT *, ROW_NUMBER() OVER (PARTITION BY packageid ORDER BY seq desc) AS rownum\n    FROM active_packages\n) pt ON pt.next_locationid = l.locationid AND rownum = 1\nGROUP BY 1",
+                    "refId": "A",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                }
+            ],
+            "thresholds": "1, 5, 10, 100, 1000",
+            "title": "Package destinations",
+            "type": "grafana-worldmap-panel",
+            "unitPlural": "packages",
+            "unitSingle": "",
+            "unitSingular": "package",
+            "valueName": "total"
+        },
+        {
+            "circleMaxSize": "10",
+            "circleMinSize": "1",
+            "colors": [
+                "#8AB8FF",
+                "#56A64B",
+                "#F2CC0C",
+                "#FF780A",
+                "#E02F44",
+                "#A352CC"
+            ],
+            "datasource": "singlestore",
+            "decimals": 0,
+            "esMetric": "Count",
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 13,
+                "w": 12,
+                "x": 12,
+                "y": 9
+            },
+            "hideEmpty": false,
+            "hideZero": false,
+            "id": 8,
+            "initialZoom": 1,
+            "locationData": "table",
+            "mapCenter": "(0°, 0°)",
+            "mapCenterLatitude": 0,
+            "mapCenterLongitude": 0,
+            "maxDataPoints": 1,
+            "mouseWheelZoom": true,
+            "pluginVersion": "7.5.7",
+            "showLegend": true,
+            "stickyLabels": false,
+            "tableQueryOptions": {
+                "geohashField": "geohash",
+                "labelField": "name",
+                "latitudeField": "latitude",
+                "longitudeField": "longitude",
+                "metricField": "inventory",
+                "queryType": "coordinates"
+            },
+            "targets": [
+                {
+                    "format": "table",
+                    "group": [],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "with\n    active_packages as (\n        select p.packageid, pt.locationid, pt.seq\n        from packages p\n        inner join package_transitions pt on p.packageid = pt.packageid\n        where p.delivered is null and pt.kind = 'arrival_scan'\n    )\nselect\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as inventory\nFROM locations l\nINNER JOIN (\n    SELECT *, ROW_NUMBER() OVER (PARTITION BY packageid ORDER BY seq desc) AS rownum\n    FROM active_packages\n) pt ON pt.locationid = l.locationid AND rownum = 1\nGROUP BY 1\norder by inventory desc;",
+                    "refId": "A",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "seq"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_transitions",
+                    "timeColumn": "recorded",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                }
+            ],
+            "thresholds": "1, 5, 10, 100, 1000",
+            "title": "Live inventory",
+            "type": "grafana-worldmap-panel",
+            "unitPlural": "packages",
+            "unitSingle": "",
+            "unitSingular": "package",
+            "valueName": "total"
+        }
+    ],
+    "refresh": false,
+    "schemaVersion": 27,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "2021-06-05T03:25:32.000Z",
+        "to": "2021-07-06T16:25:38.000Z"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "logistics",
+    "uid": "ID0kGT6Mk",
+    "version": 12
+}
