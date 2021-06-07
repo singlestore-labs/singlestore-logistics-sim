@@ -29,7 +29,8 @@ type State struct {
 	// CloseCh should be closed to stop the Simulation
 	CloseCh chan struct{}
 
-	Verbose int
+	SimInterval time.Duration
+	Verbose     int
 
 	MaxPackages                      int
 	MaxDelivered                     int
@@ -52,7 +53,8 @@ func NewState(c *Config, locations *LocationIndex, topics Topics, initialTracker
 
 		CloseCh: make(chan struct{}),
 
-		Verbose: c.Verbose,
+		SimInterval: c.SimInterval,
+		Verbose:     c.Verbose,
 
 		MaxPackages:                      c.MaxPackages,
 		MaxDelivered:                     c.MaxDelivered,
@@ -140,6 +142,10 @@ func Simulate(state *State) {
 		case <-state.CloseCh:
 			return
 		default:
+		}
+
+		if state.SimInterval > 0 {
+			time.Sleep(state.SimInterval)
 		}
 	}
 }

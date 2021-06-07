@@ -5,13 +5,11 @@ services:
       - /usr/bin/rpk
       - redpanda
       - start
-      - --smp
-      - '1'
-      - --reserve-memory
-      - 0M
+      - --smp=2
+      - --reserve-memory=0M
       - --overprovisioned
-      - --node-id
-      - '0'
+      - --default-log-level=info
+      - --node-id=0
       - --kafka-addr
       - PLAINTEXT://0.0.0.0:29092,DOCKER://redpanda:9092,OUTSIDE://redpanda:9093
       - --advertise-kafka-addr
@@ -25,13 +23,15 @@ services:
     volumes:
       - /var/lib/redpanda/data
   singlestore:
+    depends_on: [ redpanda ]
     image: singlestore/cluster-in-a-box:centos-7.3.10-6c220bccfc-3.2.8-1.11.5
     container_name: singlestore
     volumes:
       # persist data between runs:
       - /var/lib/memsql
-      - ./schema.sql:/init.sql
-      - ./data:/data
+      - ./schema.sql:/init.sql:ro
+      - ./data:/data:ro
+      - ./data/metrics/singlestore_exporter.cnf:/etc/memsql/memsql_exporter.cnf:ro
     ports:
       - 3306:3306
       - 8080:8080
@@ -40,7 +40,34 @@ services:
       - LICENSE_KEY=${SINGLESTORE_LICENSE}
       - START_AFTER_INIT=Y
   simulator:
+    depends_on: [ redpanda ]
     build: simulator
     container_name: simulator
     volumes:
       - ./simulator:/go/src/simulator
+    ports:
+      - 9000:9000
+  prometheus:
+    depends_on: [ redpanda, simulator, singlestore ]
+    image: prom/prometheus:v2.27.1
+    container_name: prometheus
+    volumes:
+      - ./data/metrics/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - 9090:9090
+  grafana:
+    depends_on: [ prometheus ]
+    image: grafana/grafana:7.5.7
+    container_name: grafana
+    environment:
+      - GF_USERS_DEFAULT_THEME=light
+      - GF_SECURITY_ADMIN_USER=root
+      - GF_SECURITY_ADMIN_PASSWORD=root
+      - "GF_INSTALL_PLUGINS=grafana-worldmap-panel,https://github.com/WilliamVenner/grafana-timepicker-buttons/releases/download/v4.1.1/williamvenner-timepickerbuttons-panel-4.1.1.zip;grafana-timepicker-buttons"
+    volumes:
+      - /var/lib/grafana
+      - ./data/metrics/dashboards:/dashboards:ro
+      - ./data/metrics/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/all.yaml:ro
+      - ./data/metrics/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/all.yaml:ro
+    ports:
+      - 3000:3000

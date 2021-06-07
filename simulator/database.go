@@ -13,6 +13,7 @@ import (
 )
 
 type Database interface {
+	CurrentTime() (time.Time, error)
 	Locations() ([]DBLocation, error)
 	ActivePackages() ([]DBActivePackage, error)
 	Close() error
@@ -54,7 +55,7 @@ func NewSingleStore(config DatabaseConfig) (*SingleStore, error) {
 	mysqlConf.Passwd = config.Password
 	mysqlConf.DBName = config.Database
 	mysqlConf.Addr = fmt.Sprintf("%s:%d", config.Host, config.Port)
-	mysqlConf.ParseTime = false
+	mysqlConf.ParseTime = true
 	mysqlConf.Timeout = 10 * time.Second
 	mysqlConf.InterpolateParams = true
 	mysqlConf.AllowNativePasswords = true
@@ -85,6 +86,19 @@ func NewSingleStore(config DatabaseConfig) (*SingleStore, error) {
 	db.SetMaxIdleConns(20)
 
 	return &SingleStore{db: sqlx.NewDb(db, "mysql")}, nil
+}
+
+func (s *SingleStore) CurrentTime() (time.Time, error) {
+	row := s.db.QueryRow("SELECT MAX(updated) FROM packages")
+	var out sql.NullTime
+	err := row.Scan(&out)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if out.Valid {
+		return out.Time, nil
+	}
+	return time.Now(), nil
 }
 
 func (s *SingleStore) Locations() ([]DBLocation, error) {
