@@ -92,11 +92,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("unable to read current time from SingleStore: %+v", err)
 		}
-		if start != nil {
-			config.StartTime = *start
-		} else {
-			config.StartTime = time.Now()
-		}
+		config.StartTime = start
 	}
 
 	log.Printf("starting simulation at %s", config.StartTime)

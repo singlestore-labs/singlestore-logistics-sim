@@ -13,7 +13,7 @@ import (
 )
 
 type Database interface {
-	CurrentTime() (*time.Time, error)
+	CurrentTime() (time.Time, error)
 	Locations() ([]DBLocation, error)
 	ActivePackages() ([]DBActivePackage, error)
 	Close() error
@@ -88,17 +88,17 @@ func NewSingleStore(config DatabaseConfig) (*SingleStore, error) {
 	return &SingleStore{db: sqlx.NewDb(db, "mysql")}, nil
 }
 
-func (s *SingleStore) CurrentTime() (*time.Time, error) {
+func (s *SingleStore) CurrentTime() (time.Time, error) {
 	row := s.db.QueryRow("SELECT MAX(updated) FROM packages")
 	var out sql.NullTime
 	err := row.Scan(&out)
-	if err == nil {
-		return nil, err
+	if err != nil {
+		return time.Time{}, err
 	}
 	if out.Valid {
-		return &out.Time, nil
+		return out.Time, nil
 	}
-	return nil, nil
+	return time.Now(), nil
 }
 
 func (s *SingleStore) Locations() ([]DBLocation, error) {

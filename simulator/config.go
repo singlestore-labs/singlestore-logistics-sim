@@ -39,7 +39,8 @@ func (n *NormalDistribution) ToDist() *distuv.Normal {
 type Config struct {
 	Verbose int `yaml:"verbose"`
 
-	// how fast does the simulator run?  0 means as fast as possible
+	// SimInterval determines how fast the simulator runs
+	// set to 0 to cause the simulator to run as fast as possible
 	SimInterval time.Duration `yaml:"sim_interval"`
 
 	StartTime    time.Time     `yaml:"start_time"`
@@ -55,19 +56,17 @@ type Config struct {
 	// should be a value between 0 and 1
 	ProbabilityExpress float64 `yaml:"probability_express"`
 
-	// minimum shipping distance in km
-	// we will only deal with packages going at least this far
+	// MinShippingDistanceKM is the minimum distance (km) that we will ship packages
 	// (in terms of linear distance between origin and destination)
 	MinShippingDistanceKM float64 `yaml:"min_shipping_distance_km"`
 
-	// minimum air freight distance in km
-	// we will send packages by air if the segment distance is larger than this value
+	// MinAirFreightDistanceKM is the minimum distance (km) that we will send packages by air
 	MinAirFreightDistanceKM float64 `yaml:"min_air_freight_distance_km"`
 
-	// avg land speed in km/h
+	// AvgLandSpeedKMPH is the average speed (km/h) for land transportation
 	AvgLandSpeedKMPH float64 `yaml:"avg_land_speed_kmph"`
 
-	// avg air freight speed in km/h
+	// AvgAirSpeedKMPH is the average speed (km/h) for air transportation
 	AvgAirSpeedKMPH float64 `yaml:"avg_air_speed_kmph"`
 
 	Database DatabaseConfig `yaml:"database"`
