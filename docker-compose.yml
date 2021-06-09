@@ -41,8 +41,6 @@ services:
   simulator:
     build: simulator
     container_name: simulator
-    volumes:
-      - ./simulator:/go/src/simulator
     ports:
       - 9000:9000
   prometheus:

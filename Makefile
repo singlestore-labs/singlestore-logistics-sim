@@ -20,7 +20,7 @@ storage:
 .PHONY: simulator
 simulator:
 	docker-compose rm -fsv simulator
-	docker-compose up -d simulator
+	docker-compose up --build -d simulator
 
 .PHONY: down
 down:
