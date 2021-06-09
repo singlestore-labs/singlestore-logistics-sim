@@ -192,7 +192,6 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 			DestinationLocationID: destination.LocationID,
 			DeliveryEstimate:      deliveryEstimate,
 			Method:                method,
-			Position:              AvroPoint(origin.Position),
 		}
 
 		err = state.Topics.WritePackage(&pkg)

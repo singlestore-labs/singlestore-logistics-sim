@@ -89,7 +89,7 @@ func NewSingleStore(config DatabaseConfig) (*SingleStore, error) {
 }
 
 func (s *SingleStore) CurrentTime() (time.Time, error) {
-	row := s.db.QueryRow("SELECT MAX(updated) FROM packages")
+	row := s.db.QueryRow("SELECT MAX(recorded) FROM package_transitions")
 	var out sql.NullTime
 	err := row.Scan(&out)
 	if err != nil {
@@ -121,19 +121,18 @@ func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
 			p.method,
 			p.destination_locationid AS destinationlocationid,
 
-			GEOGRAPHY_LONGITUDE(p.lonlat) AS longitude,
-			GEOGRAPHY_LATITUDE(p.lonlat) AS latitude,
+			GEOGRAPHY_LONGITUDE(pl.lonlat) AS longitude,
+			GEOGRAPHY_LATITUDE(pl.lonlat) AS latitude,
 
 			pt.kind AS transitionkind,
 			pt.seq AS transitionseq,
 			pt.locationid AS transitionlocationid,
 			pt.next_locationid AS transitionnextlocationid
 		FROM packages p
-		INNER JOIN (
-			SELECT *, ROW_NUMBER() OVER (PARTITION BY packageid ORDER BY seq desc) AS rownum
-			FROM package_transitions
-		) pt ON p.packageid = pt.packageid AND rownum = 1
-		WHERE p.delivered IS NULL
+		INNER JOIN package_seqs s ON p.packageid = s.packageid
+		INNER JOIN package_transitions pt ON p.packageid = pt.packageid AND s.seq = pt.seq
+		INNER JOIN package_locations pl ON p.packageid = pl.packageid
+		WHERE pt.kind != 'delivered'
 	`)
 }
 

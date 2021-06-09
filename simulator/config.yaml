@@ -14,7 +14,7 @@ tick_duration: 1h
 max_packages: 100000
 
 # exit after delivering this many packages (0 = unlimited)
-max_delivered: 0
+# max_delivered: 1
 
 # number of packages to generate per tick
 packages_per_tick:

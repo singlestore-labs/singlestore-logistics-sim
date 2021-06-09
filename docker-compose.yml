@@ -1,12 +1,14 @@
 version: '3.8'
 services:
   redpanda:
+    image: vectorized/redpanda:v21.6.1
+    container_name: redpanda
     entrypoint:
       - /usr/bin/rpk
       - redpanda
       - start
       - --smp=2
-      - --reserve-memory=0M
+      - --memory=4G
       - --overprovisioned
       - --default-log-level=info
       - --node-id=0
@@ -14,8 +16,6 @@ services:
       - PLAINTEXT://0.0.0.0:29092,DOCKER://redpanda:9092,OUTSIDE://redpanda:9093
       - --advertise-kafka-addr
       - PLAINTEXT://redpanda:29092,DOCKER://redpanda:9092,OUTSIDE://127.0.0.1:9093
-    image: vectorized/redpanda:v21.5.7
-    container_name: redpanda
     ports:
       - 9092:9092
       - 9093:9093
@@ -23,8 +23,7 @@ services:
     volumes:
       - /var/lib/redpanda/data
   singlestore:
-    depends_on: [ redpanda ]
-    image: singlestore/cluster-in-a-box:centos-7.3.10-6c220bccfc-3.2.8-1.11.5
+    image: singlestore/cluster-in-a-box:centos-7.3.11-f7c82b8166-3.2.9-1.11.5
     container_name: singlestore
     volumes:
       # persist data between runs:
@@ -40,7 +39,6 @@ services:
       - LICENSE_KEY=${SINGLESTORE_LICENSE}
       - START_AFTER_INIT=Y
   simulator:
-    depends_on: [ redpanda ]
     build: simulator
     container_name: simulator
     volumes:
@@ -48,7 +46,6 @@ services:
     ports:
       - 9000:9000
   prometheus:
-    depends_on: [ redpanda, simulator, singlestore ]
     image: prom/prometheus:v2.27.1
     container_name: prometheus
     volumes:
@@ -56,7 +53,6 @@ services:
     ports:
       - 9090:9090
   grafana:
-    depends_on: [ prometheus ]
     image: grafana/grafana:7.5.7
     container_name: grafana
     environment:

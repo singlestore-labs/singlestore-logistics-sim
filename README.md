@@ -41,8 +41,7 @@ The packages topic contains a record per package. The record is written when we 
         { "name": "DestinationLocationID", "type": "long" },
         { "name": "Method", "type": { "name": "Method", "type": "enum", "symbols": [
             "standard", "express"
-        ] } },
-        { "name": "Position", "type": "string" }
+        ] } }
     ]
 }
 ```

@@ -32,8 +32,8 @@
             "fill": 1,
             "fillGradient": 0,
             "gridPos": {
-                "h": 9,
-                "w": 18,
+                "h": 7,
+                "w": 14,
                 "x": 0,
                 "y": 0
             },
@@ -160,7 +160,144 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 9,
+                "h": 7,
+                "w": 4,
+                "x": 14,
+                "y": 0
+            },
+            "id": 13,
+            "options": {
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/.*/",
+                    "values": true
+                },
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true,
+                "text": {}
+            },
+            "pluginVersion": "7.5.7",
+            "targets": [
+                {
+                    "format": "table",
+                    "group": [],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "select latest_offset - successful_cursor_offset as transitions from information_schema.pipelines_cursors where pipeline_name = 'transitions'",
+                    "refId": "A",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "origin_locationid"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_states",
+                    "timeColumn": "received",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                },
+                {
+                    "format": "table",
+                    "group": [],
+                    "hide": false,
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "select latest_offset - successful_cursor_offset as packages from information_schema.pipelines_cursors where pipeline_name = 'packages'",
+                    "refId": "B",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "origin_locationid"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_states",
+                    "timeColumn": "received",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                },
+                {
+                    "format": "table",
+                    "group": [],
+                    "hide": false,
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "select latest_offset - successful_cursor_offset as locations from information_schema.pipelines_cursors where pipeline_name = 'locations'",
+                    "refId": "C",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "origin_locationid"
+                                ],
+                                "type": "column"
+                            }
+                        ]
+                    ],
+                    "table": "package_states",
+                    "timeColumn": "received",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        }
+                    ]
+                }
+            ],
+            "title": "Pipeline lag",
+            "type": "gauge"
+        },
+        {
+            "datasource": "singlestore",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
                 "w": 3,
                 "x": 18,
                 "y": 0
@@ -241,7 +378,7 @@
                     "hide": false,
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "SELECT\n  $__timeGroupAlias(delivered,'1d'),\n  count(*) AS \"delivered packages\"\nFROM packages\nWHERE\n  $__timeFilter(delivered)\nGROUP BY 1\nORDER BY 1",
+                    "rawSql": "SELECT\n  $__timeGroupAlias(updated, '1d'),\n  count(*) AS \"delivered packages\"\nFROM package_states\nWHERE\n  last_transition = 'delivered'\n  AND $__timeFilter(updated)\nGROUP BY 1\nORDER BY 1",
                     "refId": "B",
                     "select": [
                         [
@@ -267,7 +404,7 @@
             ],
             "timeFrom": null,
             "timeShift": null,
-            "title": "Average volume by day",
+            "title": "volume / day",
             "type": "stat"
         },
         {
@@ -295,7 +432,7 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 4,
+                "h": 2,
                 "w": 3,
                 "x": 21,
                 "y": 0
@@ -323,7 +460,7 @@
                     "group": [],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "select\n  date_format(max(updated), '%Y-%m-%d %H:%i') as 'now'\nfrom packages;",
+                    "rawSql": "select\n  date_format(max(recorded), '%Y-%m-%d %H:%i') as 'now'\nfrom package_transitions;",
                     "refId": "A",
                     "select": [
                         [
@@ -360,7 +497,7 @@
                 "h": 5,
                 "w": 3,
                 "x": 21,
-                "y": 4
+                "y": 2
             },
             "id": 9,
             "options": {
@@ -379,7 +516,7 @@
                     "group": [],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "select\n  unix_timestamp(min(updated)) as time_from,\n  unix_timestamp(date_add(max(updated), interval 1 week)) as time_to,\n  \"all data\" as button_text\nfrom packages;",
+                    "rawSql": "select\n  unix_timestamp(min(recorded)) as time_from,\n  unix_timestamp(date_add(max(recorded), interval 1 week)) as time_to,\n  \"all data\" as button_text\nfrom package_transitions;",
                     "refId": "A",
                     "select": [
                         [
@@ -408,7 +545,7 @@
                     "hide": false,
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "select\n  unix_timestamp(date_sub(max(updated), interval 1 month)) as time_from,\n  unix_timestamp(date_add(max(updated), interval 1 week)) as time_to,\n  \"last month\" as button_text\nfrom packages;",
+                    "rawSql": "select\n  unix_timestamp(date_sub(max(recorded), interval 1 month)) as time_from,\n  unix_timestamp(date_add(max(recorded), interval 1 week)) as time_to,\n  \"last month\" as button_text\nfrom package_transitions;",
                     "refId": "B",
                     "select": [
                         [
@@ -437,7 +574,7 @@
                     "hide": false,
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "select\n  unix_timestamp(date_sub(max(updated), interval 1 week)) as time_from,\n  unix_timestamp(date_add(max(updated), interval 2 day)) as time_to,\n  \"last week\" as button_text\nfrom packages;",
+                    "rawSql": "select\n  unix_timestamp(date_sub(max(recorded), interval 1 week)) as time_from,\n  unix_timestamp(date_add(max(recorded), interval 2 day)) as time_to,\n  \"last week\" as button_text\nfrom package_transitions;",
                     "refId": "C",
                     "select": [
                         [
@@ -486,7 +623,7 @@
                 "h": 13,
                 "w": 12,
                 "x": 0,
-                "y": 9
+                "y": 7
             },
             "hideEmpty": false,
             "hideZero": false,
@@ -515,7 +652,7 @@
                     "group": [],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "with\n    active_packages as (\n        select p.packageid, pt.next_locationid, pt.seq\n        from packages p\n        inner join package_transitions pt on p.packageid = pt.packageid\n        where p.delivered is null and pt.kind = 'departure_scan'\n    )\nselect\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN (\n    SELECT *, ROW_NUMBER() OVER (PARTITION BY packageid ORDER BY seq desc) AS rownum\n    FROM active_packages\n) pt ON pt.next_locationid = l.locationid AND rownum = 1\nGROUP BY 1",
+                    "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.next_locationid\nWHERE ps.last_transition = 'departure_scan'\nGROUP BY 1;",
                     "refId": "A",
                     "select": [
                         [
@@ -569,7 +706,7 @@
                 "h": 13,
                 "w": 12,
                 "x": 12,
-                "y": 9
+                "y": 7
             },
             "hideEmpty": false,
             "hideZero": false,
@@ -589,7 +726,7 @@
                 "labelField": "name",
                 "latitudeField": "latitude",
                 "longitudeField": "longitude",
-                "metricField": "inventory",
+                "metricField": "metric",
                 "queryType": "coordinates"
             },
             "targets": [
@@ -598,7 +735,7 @@
                     "group": [],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "with\n    active_packages as (\n        select p.packageid, pt.locationid, pt.seq\n        from packages p\n        inner join package_transitions pt on p.packageid = pt.packageid\n        where p.delivered is null and pt.kind = 'arrival_scan'\n    )\nselect\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as inventory\nFROM locations l\nINNER JOIN (\n    SELECT *, ROW_NUMBER() OVER (PARTITION BY packageid ORDER BY seq desc) AS rownum\n    FROM active_packages\n) pt ON pt.locationid = l.locationid AND rownum = 1\nGROUP BY 1\norder by inventory desc;",
+                    "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.last_locationid\nWHERE ps.last_transition = 'arrival_scan'\nGROUP BY 1;",
                     "refId": "A",
                     "select": [
                         [
@@ -639,12 +776,12 @@
         "list": []
     },
     "time": {
-        "from": "2021-06-05T03:25:32.000Z",
-        "to": "2021-07-06T16:25:38.000Z"
+        "from": "2021-08-16T22:00:41.000Z",
+        "to": "2021-08-25T22:00:41.000Z"
     },
     "timepicker": {},
     "timezone": "",
     "title": "logistics",
     "uid": "ID0kGT6Mk",
-    "version": 12
+    "version": 3
 }
