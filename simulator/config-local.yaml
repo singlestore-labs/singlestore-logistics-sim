@@ -1,5 +1,15 @@
 verbose: 0
 
+# max_delivered: 1
+
+sim_interval: 1s
+tick_duration: 1h
+max_packages: 100
+
+packages_per_tick:
+  avg: 10
+  stddev: 3
+
 database:
   host: 127.0.0.1
   port: 3306

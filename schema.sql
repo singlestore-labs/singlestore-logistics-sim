@@ -13,9 +13,6 @@ CREATE TABLE packages (
     -- marks when the package is expected to be delivered
     delivery_estimate DATETIME NOT NULL,
 
-    -- marks when the package was delivered
-    delivered DATETIME,
-
     -- origin_locationid specifies the location where the package was originally
     -- received
     origin_locationid BIGINT NOT NULL,
@@ -28,19 +25,9 @@ CREATE TABLE packages (
     -- express packages are delivered using the fastest method at each point
     method ENUM ('standard', 'express') NOT NULL,
 
-    -- lonlat is the last reported real-time position of the package
-    -- this attribute does not always correspond to the locations table as it is
-    -- updated while the package moves in real-time between different locations
-    lonlat GEOGRAPHYPOINT NOT NULL,
-
-    -- marks when this row was last changed
-    updated DATETIME NOT NULL,
-
-    PRIMARY KEY (packageid),
-    INDEX (lonlat),
-    INDEX (received),
-    INDEX (updated),
-    INDEX (delivered)
+    KEY (packageid) USING CLUSTERED COLUMNSTORE,
+    SHARD (packageid),
+    UNIQUE KEY (packageid) USING HASH
 );
 
 CREATE REFERENCE TABLE locations (
@@ -101,10 +88,30 @@ CREATE TABLE package_transitions (
         'delivered'
     ) NOT NULL,
 
-    PRIMARY KEY (packageid, seq),
-    SHARD (packageid),
-    INDEX (recorded),
-    INDEX (kind)
+    KEY (packageid, seq) USING CLUSTERED COLUMNSTORE,
+    KEY (packageid) USING HASH,
+    SHARD (packageid)
+);
+
+-- this table provides a mapping from package id to it's most recent sequence number
+-- used to quickly join packages to their most recent transitions
+CREATE TABLE package_seqs (
+    packageid CHAR(36) NOT NULL,
+    seq INT NOT NULL,
+
+    PRIMARY KEY (packageid)
+);
+
+-- this table holds the realtime location of each active package
+-- rows are eventually deleted from this table once the corresponding package
+-- has been delievered
+CREATE TABLE package_locations (
+    packageid CHAR(36) NOT NULL,
+    lonlat GEOGRAPHYPOINT NOT NULL,
+    recorded DATETIME NOT NULL,
+
+    PRIMARY KEY (packageid),
+    INDEX (lonlat)
 );
 
 CREATE PIPELINE packages
@@ -117,8 +124,7 @@ FORMAT AVRO (
     @delivery_estimate <- DeliveryEstimate,
     origin_locationid <- OriginLocationID,
     destination_locationid <- DestinationLocationID,
-    method <- Method,
-    lonlat <- Position
+    method <- Method
 )
 SCHEMA '{
     "type": "record",
@@ -131,13 +137,11 @@ SCHEMA '{
         { "name": "DestinationLocationID", "type": "long" },
         { "name": "Method", "type": { "name": "Method", "type": "enum", "symbols": [
             "standard", "express"
-        ] } },
-        { "name": "Position", "type": "string" }
+        ] } }
     ]
 }'
 SET
     received = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@received / 1000) SECOND),
-    updated = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@received / 1000) SECOND),
     delivery_estimate = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@delivery_estimate / 1000) SECOND);
 
 START PIPELINE packages;
@@ -158,12 +162,9 @@ BEGIN
         (packageid, seq, locationid, next_locationid, recorded, kind)
     SELECT * FROM batch;
 
-    UPDATE packages
-    INNER JOIN batch ON packages.packageid = batch.packageid
-    SET
-        packages.delivered = batch.recorded,
-        packages.updated = batch.recorded
-    WHERE batch.kind = "delivered";
+    INSERT INTO package_seqs (packageid, seq)
+    SELECT packageid, seq FROM batch
+    ON DUPLICATE KEY UPDATE seq = IF(VALUES(seq) > package_seqs.seq, VALUES(seq), package_seqs.seq);
 END //
 
 DELIMITER ;
@@ -218,10 +219,10 @@ DELIMITER ;
 
 CREATE PIPELINE locations
 AS LOAD DATA KAFKA 'redpanda/locations'
-INTO PROCEDURE process_locations
+INTO TABLE package_locations
 FORMAT AVRO (
     packageid <- PackageID,
-    position <- Position,
+    lonlat <- Position,
     @recorded <- Recorded
 )
 SCHEMA '{
@@ -234,6 +235,22 @@ SCHEMA '{
     ]
 }'
 SET
-    recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND);
+    recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND)
+ON DUPLICATE KEY UPDATE
+    lonlat = IF(VALUES(recorded) > recorded, VALUES(lonlat), lonlat),
+    recorded = IF(VALUES(recorded) > recorded, VALUES(recorded), recorded);
 
 START PIPELINE locations;
+
+-- useful views for analytics and apps
+
+CREATE VIEW package_states AS
+SELECT
+    p.*,
+    pt.kind AS last_transition,
+    pt.locationid AS last_locationid,
+    pt.next_locationid AS next_locationid,
+    pt.recorded AS updated
+FROM packages p
+INNER JOIN package_seqs s ON p.packageid = s.packageid
+INNER JOIN package_transitions pt ON p.packageid = pt.packageid AND s.seq = pt.seq;

@@ -27,8 +27,7 @@ var (
 				{ "name": "DestinationLocationID", "type": "long" },
 				{ "name": "Method", "type": { "name": "Method", "type": "enum", "symbols": [
 					"standard", "express"
-				] } },
-				{ "name": "Position", "type": "string" }
+				] } }
 			]
 		}
 	`)

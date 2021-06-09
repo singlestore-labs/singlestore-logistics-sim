@@ -17,7 +17,6 @@ type Package struct {
 	DestinationLocationID int64
 	DeliveryEstimate      time.Time
 	Method                enum.DeliveryMethod
-	Position              AvroPoint
 }
 
 type Transition struct {
