@@ -115,7 +115,7 @@ CREATE TABLE package_locations (
 );
 
 CREATE PIPELINE packages
-AS LOAD DATA KAFKA 'redpanda/packages'
+AS LOAD DATA KAFKA 'rp-node-0/packages'
 SKIP DUPLICATE KEY ERRORS
 INTO TABLE packages
 FORMAT AVRO (
@@ -170,7 +170,7 @@ END //
 DELIMITER ;
 
 CREATE PIPELINE transitions
-AS LOAD DATA KAFKA 'redpanda/transitions'
+AS LOAD DATA KAFKA 'rp-node-0/transitions'
 INTO PROCEDURE process_transitions
 FORMAT AVRO (
     packageid <- PackageID,
@@ -218,7 +218,7 @@ END //
 DELIMITER ;
 
 CREATE PIPELINE locations
-AS LOAD DATA KAFKA 'redpanda/locations'
+AS LOAD DATA KAFKA 'rp-node-0/locations'
 INTO TABLE package_locations
 FORMAT AVRO (
     packageid <- PackageID,

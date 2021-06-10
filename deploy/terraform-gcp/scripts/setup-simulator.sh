@@ -1,20 +1,15 @@
-# set a specific start time if desired
-# start_time: "2015-02-24T18:19:39.12Z"
+setup_simulator() {
+    local bin_url="$(metadata simulator-bin)"
+    gsutil cp ${bin_url} /usr/bin/simulator
+    chmod +x /usr/bin/simulator
 
-# logging - set to 0 to disable
-verbose: 0
-
-# simulation speed - set to 0 to run the simulator as fast as possible
-# sim_interval: 1s
-
+    mkdir -p /etc/simulator
+    cat >/etc/simulator/config.yaml <<EOF
 # amount of time to simulate each tick
 tick_duration: 1h
 
 # maximum number of packages to simulate at any point (0 = unlimited)
 max_packages: 100000
-
-# exit after delivering this many packages (0 = unlimited)
-# max_delivered: 1
 
 # number of packages to generate per tick
 packages_per_tick:
@@ -54,3 +49,26 @@ topics:
 
 metrics:
   port: 9000
+EOF
+
+    cat >/etc/systemd/system/simulator.service <<EOF
+[Unit]
+Description=SingleStore Logistics Simulator
+After=network.target
+
+[Service]
+Restart=always
+RestartSec=1
+ExecStart=/usr/bin/simulator --config /etc/simulator/config.yaml
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable simulator
+    systemctl start simulator
+
+}
+
+run_or_die setup_simulator
