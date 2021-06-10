@@ -51,7 +51,7 @@ variable "s2_license" {
 
 variable "s2_version" {
   description = "The version of SingleStore to use"
-  default     = "7.3.11"
+  default     = "latest"
 }
 
 variable "s2_aggs" {

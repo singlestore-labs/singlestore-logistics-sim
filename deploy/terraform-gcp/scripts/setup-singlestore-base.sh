@@ -18,7 +18,7 @@ EOF
         mkswap /data/swapfile
         swapon /data/swapfile
 
-        mkdir -p /data/memsql
+        mkdir -p /data/memsql /var/lib/memsql
         mount --bind /data/memsql /var/lib/memsql
     fi
 
