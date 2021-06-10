@@ -1,8 +1,8 @@
 setup_redpanda() {
     local node_index=$(hostname | sed 's/^.*-\([0-9]\+\)$/\1/')
 
-    mkdir -p /var/lib/redpanda /data/redpanda
-    ln -s /data/redpanda /var/lib/redpanda
+    mkdir -p /data/redpanda
+    mount --bind /data/redpanda /var/lib/redpanda
 
     curl -1sLf 'https://packages.vectorized.io/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash
     apt install -y redpanda

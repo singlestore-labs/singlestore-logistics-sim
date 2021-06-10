@@ -2,7 +2,7 @@ version: '3.8'
 services:
   redpanda:
     image: vectorized/redpanda:v21.6.1
-    container_name: redpanda
+    container_name: rp-node-0
     entrypoint:
       - /usr/bin/rpk
       - redpanda
@@ -13,9 +13,9 @@ services:
       - --default-log-level=info
       - --node-id=0
       - --kafka-addr
-      - PLAINTEXT://0.0.0.0:29092,DOCKER://redpanda:9092,OUTSIDE://redpanda:9093
+      - PLAINTEXT://0.0.0.0:29092,DOCKER://rp-node-0:9092,OUTSIDE://rp-node-0:9093
       - --advertise-kafka-addr
-      - PLAINTEXT://redpanda:29092,DOCKER://redpanda:9092,OUTSIDE://127.0.0.1:9093
+      - PLAINTEXT://rp-node-0:29092,DOCKER://rp-node-0:9092,OUTSIDE://127.0.0.1:9093
     ports:
       - 9092:9092
       - 9093:9093
@@ -24,7 +24,7 @@ services:
       - /var/lib/redpanda/data
   singlestore:
     image: singlestore/cluster-in-a-box:centos-7.3.11-f7c82b8166-3.2.9-1.11.5
-    container_name: singlestore
+    container_name: s2-agg-0
     volumes:
       # persist data between runs:
       - /var/lib/memsql

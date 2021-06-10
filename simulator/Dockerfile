@@ -10,6 +10,9 @@ COPY . .
 
 RUN go build -o /simulator bin/simulator/main.go
 
+FROM scratch AS bin
+COPY --from=builder /simulator /simulator
+
 FROM debian:buster-slim
 
 CMD ["./simulator", "--config", "config.yaml"]

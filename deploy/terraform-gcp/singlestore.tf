@@ -26,7 +26,9 @@ resource "google_compute_instance" "singlestore_agg" {
     s2-license         = var.s2_license
     s2-version         = var.s2_version
     s2-aggs            = var.s2_aggs
-    s2-leaves          = var.s2_leaves
+    s2-leaves          = var.s2_leaves * 2
+    s2-schema          = "gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.schema.output_name}"
+    s2-worldcities     = "gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.worldcities.output_name}"
   }
 }
 

@@ -31,8 +31,8 @@ resource "google_storage_bucket_object" "simulator" {
   source = "${path.module}/../../simulator/bin/simulator/simulator"
 
   provisioner "local-exec" {
-    working_dir = "${path.module}/../../simulator/bin/simulator"
-    command     = "go build"
+    working_dir = "${path.module}/../../simulator"
+    command     = "DOCKER_BUILDKIT=1 docker build --target bin --output bin/simulator ."
   }
 }
 
@@ -78,4 +78,16 @@ resource "google_storage_bucket_object" "setup_simulator" {
   content = join("\n", concat(local.script_prelude, [
     file("${path.module}/scripts/setup-simulator.sh"),
   ]))
+}
+
+resource "google_storage_bucket_object" "schema" {
+  name   = "data/schema.sql"
+  bucket = google_storage_bucket.default.name
+  source = "${path.module}/../../schema.sql"
+}
+
+resource "google_storage_bucket_object" "worldcities" {
+  name   = "data/worldcities.csv"
+  bucket = google_storage_bucket.default.name
+  source = "${path.module}/../../data/simplemaps/worldcities.csv"
 }

@@ -1,4 +1,5 @@
 /.terraform
 /terraform.tfstate
+/.terraform.tfstate.lock.info
 /terraform.tfstate.backup
 /terraform.tfvars

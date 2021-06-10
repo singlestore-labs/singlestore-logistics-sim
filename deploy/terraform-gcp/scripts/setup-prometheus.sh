@@ -2,6 +2,9 @@ setup_prometheus() {
     local simulator_targets=$(metadata simulator-targets)
     local redpanda_targets=$(metadata redpanda-targets)
 
+    mkdir -p /data/prometheus
+    chown 65534:65534 /data/prometheus
+
     mkdir -p /etc/prometheus
     cat >/etc/prometheus/prometheus.yml <<EOF
 global:
@@ -21,6 +24,7 @@ EOF
         --name prometheus \
         --net host \
         -v /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+        -v /data/prometheus:/prometheus \
         prom/prometheus:v2.27.1
 }
 

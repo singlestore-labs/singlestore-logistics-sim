@@ -42,7 +42,7 @@ avg_land_speed_kmph: 50
 avg_air_speed_kmph: 750
 
 database:
-  host: singlestore
+  host: s2-agg-0
   port: 3306
   username: root
   password: root
@@ -50,7 +50,7 @@ database:
 
 topics:
   brokers:
-    - redpanda:9092
+    - rp-node-0:9092
 
 metrics:
   port: 9000

@@ -2,7 +2,7 @@ wait_for_s2_node() {
     local host="${1}"
     log "waiting for ${host}"
     while true; do
-        if singlestore -h ${host} -e "select 1" >/dev/null; then
+        if singlestore -h ${host} -proot -e "select 1" >/dev/null; then
             break
         fi
         sleep 1
@@ -21,6 +21,7 @@ setup_singlestore_master() {
     memsqlctl enable-high-availability --yes
 
     # setup aggs
+    # start at 1 to skip the master (this node)
     for ((i = 1; i < ${num_aggs}; i++)); do
         local agg_host="s2-agg-${i}"
         wait_for_s2_node ${agg_host}
@@ -28,11 +29,20 @@ setup_singlestore_master() {
     done
 
     # setup leaves
-    for ((i = 1; i < ${num_leaves}; i++)); do
+    for ((i = 0; i < ${num_leaves}; i++)); do
         local leaf_host="s2-leaf-${i}"
         wait_for_s2_node ${leaf_host}
         memsqlctl add-leaf --yes --host ${leaf_host} --password root
     done
+
+    # initialize schema
+    local schema_url="$(metadata s2-schema)"
+    gsutil cp ${schema_url} /data/schema.sql
+    local worldcities_url="$(metadata s2-worldcities)"
+    mkdir -p /data/simplemaps
+    gsutil cp ${worldcities_url} /data/simplemaps/worldcities.csv
+
+    singlestore -proot </data/schema.sql
 }
 
 setup_singlestore_agg() {

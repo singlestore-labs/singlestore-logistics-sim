@@ -5,6 +5,19 @@ setup_singlestore_studio() {
     apt update
     apt -y install singlestore-client singlestoredb-studio
 
+    cat >/var/lib/singlestoredb-studio/studio.hcl <<EOF
+cluster "logistics" {
+    name              = "logistics"
+    description       = "logistics simulation"
+    hostname          = "s2-agg-0"
+    port              = 3306
+    profile           = "PRODUCTION"
+    websocket         = false
+    websocketSSL      = false
+    kerberosAutologin = false
+}
+EOF
+
     systemctl enable singlestoredb-studio
     systemctl start singlestoredb-studio
 }

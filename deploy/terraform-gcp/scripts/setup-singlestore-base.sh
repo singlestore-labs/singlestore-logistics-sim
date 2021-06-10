@@ -18,8 +18,8 @@ EOF
         mkswap /data/swapfile
         swapon /data/swapfile
 
-        mkdir -p /var/lib/memsql /data/memsql
-        ln -s /data/memsql /var/lib/memsql
+        mkdir -p /data/memsql
+        mount --bind /data/memsql /var/lib/memsql
     fi
 
     curl -s 'https://release.memsql.com/release-aug2018.gpg' | sudo apt-key add -
