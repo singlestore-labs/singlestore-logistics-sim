@@ -21,6 +21,13 @@ resource "google_compute_instance" "dashboard" {
 
   service_account {
     email  = google_service_account.service_account.email
-    scopes = ["default"]
+    scopes = local.default_scopes
+  }
+
+  metadata = {
+    startup-script-url = "gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.setup_dashboard.output_name}"
+    simulator-targets  = jsonencode([for i, _ in google_compute_instance.simulator[*] : "simulator-${i}:9000"])
+    redpanda-targets   = jsonencode([for i, _ in google_compute_instance.redpanda[*] : "rp-node-${i}:9644"])
+    dashboards         = join(" ", [for k, v in google_storage_bucket_object.grafana_dashboards : "gs://${google_storage_bucket.default.name}/${v.output_name}"])
   }
 }

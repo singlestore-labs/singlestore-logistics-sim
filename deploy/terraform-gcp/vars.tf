@@ -17,6 +17,10 @@ variable "machine_image" {
   default = "ubuntu-os-cloud/ubuntu-1804-lts"
 }
 
+variable "storage_bucket" {
+  default = "singlestore-logistics-sim"
+}
+
 # SingleStore vars prefixed with "s2_"
 # Redpanda vars prefixed with "rp_"
 # Dashboard vars prefixed with "dashboard_"
@@ -31,13 +35,23 @@ variable "dashboard_machine_type" {
 variable "sim_machine_type" {
   # List of available machines per region/ zone:
   # https://cloud.google.com/compute/docs/regions-zones#available
-  default = "n2-standard-2"
+  default = "n2-highcpu-8"
 }
 
 variable "sim_workers" {
   description = "The number of simulators to run."
   type        = number
   default     = "1"
+}
+
+variable "s2_license" {
+  description = "SingleStore license key"
+  sensitive   = true
+}
+
+variable "s2_version" {
+  description = "The version of SingleStore to use"
+  default     = "7.3.11"
 }
 
 variable "s2_aggs" {
@@ -55,29 +69,29 @@ variable "s2_leaves" {
 variable "s2_machine_type" {
   # List of available machines per region/ zone:
   # https://cloud.google.com/compute/docs/regions-zones#available
-  default = "n2-standard-2"
+  default = "n2-standard-16"
 }
 
 variable "s2_scratch_disks" {
   description = "the number of scratch disks on each SingleStore leaf node."
-  default     = 1
+  default     = 2
   type        = number
 }
 
 variable "rp_nodes" {
   description = "The size of the Redpanda cluster."
   type        = number
-  default     = "1"
+  default     = "2"
 }
 
 variable "rp_machine_type" {
   # List of available machines per region/ zone:
   # https://cloud.google.com/compute/docs/regions-zones#available
-  default = "n2-standard-2"
+  default = "n2-standard-16"
 }
 
 variable "rp_scratch_disks" {
   description = "the number of scratch disks on each Redpanda machine."
-  default     = 1
+  default     = 2
   type        = number
 }

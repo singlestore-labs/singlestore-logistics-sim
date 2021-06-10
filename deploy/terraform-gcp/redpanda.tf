@@ -24,6 +24,10 @@ resource "google_compute_instance" "redpanda" {
 
   service_account {
     email  = google_service_account.service_account.email
-    scopes = ["default"]
+    scopes = local.default_scopes
+  }
+
+  metadata = {
+    startup-script-url = "gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.setup_redpanda.output_name}"
   }
 }
