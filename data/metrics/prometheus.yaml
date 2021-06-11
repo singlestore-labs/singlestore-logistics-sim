@@ -5,7 +5,7 @@ global:
 scrape_configs:
   - job_name: 'singlestore-logistics-simulator'
     static_configs:
-      - targets: ['simulator:9000']
+      - targets: ['singlestore-logistics-sim_simulator_1:9000', 'singlestore-logistics-sim_simulator_2:9000']
   - job_name: 'singlestore-db'
     metrics_path: /cluster-metrics
     static_configs:

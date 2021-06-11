@@ -25,15 +25,21 @@ resource "google_storage_bucket_object" "grafana_dashboards" {
   source = "${path.module}/../../data/metrics/dashboards/${each.value}"
 }
 
-resource "google_storage_bucket_object" "simulator" {
-  name   = "bin/simulator"
-  bucket = google_storage_bucket.default.name
-  source = "${path.module}/../../simulator/bin/simulator/simulator"
-
+resource "null_resource" "build_simulator" {
   provisioner "local-exec" {
     working_dir = "${path.module}/../../simulator"
     command     = "DOCKER_BUILDKIT=1 docker build --target bin --output bin/simulator ."
   }
+}
+
+resource "google_storage_bucket_object" "simulator" {
+  depends_on = [
+    null_resource.build_simulator
+  ]
+
+  name   = "bin/simulator"
+  bucket = google_storage_bucket.default.name
+  source = "${path.module}/../../simulator/bin/simulator/simulator"
 }
 
 resource "google_storage_bucket_object" "setup_dashboard" {

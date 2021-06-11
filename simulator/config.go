@@ -39,6 +39,9 @@ func (n *NormalDistribution) ToDist() *distuv.Normal {
 type Config struct {
 	Verbose int `yaml:"verbose"`
 
+	// SimulatorID must be a unique identifier for this process - if multiple simulators are running, each must have a unique id
+	SimulatorID string `yaml:"id"`
+
 	// SimInterval determines how fast the simulator runs
 	// set to 0 to cause the simulator to run as fast as possible
 	SimInterval time.Duration `yaml:"sim_interval"`

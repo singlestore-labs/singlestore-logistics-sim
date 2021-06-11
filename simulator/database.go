@@ -15,7 +15,7 @@ import (
 type Database interface {
 	CurrentTime() (time.Time, error)
 	Locations() ([]DBLocation, error)
-	ActivePackages() ([]DBActivePackage, error)
+	ActivePackages(string) ([]DBActivePackage, error)
 	Close() error
 }
 
@@ -113,7 +113,7 @@ func (s *SingleStore) Locations() ([]DBLocation, error) {
 	`)
 }
 
-func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
+func (s *SingleStore) ActivePackages(simulatorID string) ([]DBActivePackage, error) {
 	out := make([]DBActivePackage, 0)
 	return out, s.db.Select(&out, `
 		SELECT
@@ -131,7 +131,8 @@ func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
 		FROM packages p
 		INNER JOIN package_states s ON p.packageid = s.packageid
 		INNER JOIN package_locations pl ON p.packageid = pl.packageid
-	`)
+		WHERE p.simulatorid = ?
+	`, simulatorID)
 }
 
 func (s *SingleStore) Close() error {

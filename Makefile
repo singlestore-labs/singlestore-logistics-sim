@@ -1,7 +1,7 @@
 .PHONY: all
 all:
 	docker-compose rm -fsv
-	docker-compose up -d
+	docker-compose up --build -d
 
 .PHONY: logs
 logs:
@@ -19,8 +19,8 @@ storage:
 
 .PHONY: simulator
 simulator:
-	docker-compose rm -fsv simulator
-	docker-compose up --build -d simulator
+	docker-compose rm -fsv simulator-0 simulator-1
+	docker-compose up --build -d simulator-0 simulator-1
 
 .PHONY: down
 down:

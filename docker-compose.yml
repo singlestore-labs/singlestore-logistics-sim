@@ -38,11 +38,19 @@ services:
       - ROOT_PASSWORD=root
       - LICENSE_KEY=${SINGLESTORE_LICENSE}
       - START_AFTER_INIT=Y
-  simulator:
+  simulator-0:
     build: simulator
-    container_name: simulator
-    ports:
-      - 9000:9000
+    image: singlestore-logistics-simulator
+    container_name: simulator-0
+    environment:
+      - SIMULATOR_ID=simulator-0
+  simulator-1:
+    depends_on:
+      - simulator-0
+    image: singlestore-logistics-simulator
+    container_name: simulator-1
+    environment:
+      - SIMULATOR_ID=simulator-1
   prometheus:
     image: prom/prometheus:v2.27.1
     container_name: prometheus

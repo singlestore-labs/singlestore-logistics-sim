@@ -12,6 +12,7 @@ import (
 
 type Package struct {
 	PackageID             uuid.UUID
+	SimulatorID           string
 	Received              time.Time
 	OriginLocationID      int64
 	DestinationLocationID int64

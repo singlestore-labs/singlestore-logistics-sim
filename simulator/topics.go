@@ -21,6 +21,7 @@ var (
 			"name": "Package",
 			"fields": [
 				{ "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+				{ "name": "SimulatorID", "type": "string" },
 				{ "name": "Received", "type": { "type": "long", "logicalType": "timestamp-millis" } },
 				{ "name": "DeliveryEstimate", "type": { "type": "long", "logicalType": "timestamp-millis" } },
 				{ "name": "OriginLocationID", "type": "long" },

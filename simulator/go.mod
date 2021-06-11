@@ -3,6 +3,7 @@ module simulator
 go 1.15
 
 require (
+	cuelang.org/go v0.4.0
 	github.com/Shopify/sarama v1.29.0
 	github.com/deathowl/go-metrics-prometheus v0.0.0-20200518174047-74482eab5bfb
 	github.com/go-sql-driver/mysql v1.6.0

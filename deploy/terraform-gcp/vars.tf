@@ -41,7 +41,7 @@ variable "sim_machine_type" {
 variable "sim_workers" {
   description = "The number of simulators to run."
   type        = number
-  default     = "1"
+  default     = "5"
 }
 
 variable "s2_license" {
@@ -63,7 +63,7 @@ variable "s2_aggs" {
 variable "s2_leaves" {
   description = "The number of leaves per availability group in the SingleStore cluster."
   type        = number
-  default     = "1"
+  default     = "2"
 }
 
 variable "s2_machine_type" {

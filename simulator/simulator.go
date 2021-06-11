@@ -29,6 +29,7 @@ type State struct {
 	// CloseCh should be closed to stop the Simulation
 	CloseCh chan struct{}
 
+	SimulatorID string
 	SimInterval time.Duration
 	Verbose     int
 
@@ -53,6 +54,7 @@ func NewState(c *Config, locations *LocationIndex, topics Topics, initialTracker
 
 		CloseCh: make(chan struct{}),
 
+		SimulatorID: c.SimulatorID,
 		SimInterval: c.SimInterval,
 		Verbose:     c.Verbose,
 
@@ -187,6 +189,7 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 
 		pkg := Package{
 			PackageID:             uuid.NewV4(),
+			SimulatorID:           state.SimulatorID,
 			Received:              now,
 			OriginLocationID:      origin.LocationID,
 			DestinationLocationID: destination.LocationID,

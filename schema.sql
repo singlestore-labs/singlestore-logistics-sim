@@ -3,9 +3,12 @@ USE logistics;
 
 -- the packages table stores one row per package
 CREATE TABLE packages (
-    -- packageid is a UUID stored in its canonical text representation
-    -- (32 hexadecimal characters and 4 hyphens)
+    -- packageid is a unique identifier for this package
+    -- format: UUID stored in its canonical text representation (32 hexadecimal characters and 4 hyphens)
     packageid CHAR(36) NOT NULL,
+
+    -- simulatorid is a unique identifier for the simulator process which manages this package
+    simulatorid TEXT NOT NULL,
 
     -- marks when the package was received
     received DATETIME NOT NULL,
@@ -127,6 +130,7 @@ SKIP DUPLICATE KEY ERRORS
 INTO TABLE packages
 FORMAT AVRO (
     packageid <- PackageID,
+    simulatorid <- SimulatorID,
     @received <- Received,
     @delivery_estimate <- DeliveryEstimate,
     origin_locationid <- OriginLocationID,
@@ -138,6 +142,7 @@ SCHEMA '{
     "name": "Package",
     "fields": [
         { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+        { "name": "SimulatorID", "type": "string" },
         { "name": "Received", "type": { "type": "long", "logicalType": "timestamp-millis" } },
         { "name": "DeliveryEstimate", "type": { "type": "long", "logicalType": "timestamp-millis" } },
         { "name": "OriginLocationID", "type": "long" },

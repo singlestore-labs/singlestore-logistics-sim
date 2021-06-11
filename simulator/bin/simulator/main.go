@@ -10,6 +10,8 @@ import (
 	"runtime/pprof"
 	"simulator"
 	"time"
+
+	"cuelang.org/go/pkg/strconv"
 )
 
 type FlagStringSlice []string
@@ -28,9 +30,11 @@ func main() {
 
 	configPaths := FlagStringSlice{}
 	cpuprofile := ""
+	simulatorID := ""
 
 	flag.Var(&configPaths, "config", "path to the config file; can be provided multiple times, files will be merged in the order provided")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to `file`")
+	flag.StringVar(&simulatorID, "id", "", "The unique identifier for this simulator process - if multiple simulators are running, each must have a unique id")
 
 	flag.Parse()
 
@@ -44,6 +48,32 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to load config files: %v; error: %+v", configPaths, err)
 	}
+
+	// set SimulatorID from env variable
+	if sid, ok := os.LookupEnv("SIMULATOR_ID"); ok {
+		config.SimulatorID = sid
+	}
+
+	// set SimulatorID from flag
+	if len(simulatorID) > 0 {
+		config.SimulatorID = simulatorID
+	}
+
+	// if still empty, fail
+	if len(config.SimulatorID) == 0 {
+		log.Fatal("simulator id required")
+	}
+
+	// set metrics port from env variable
+	if mport, ok := os.LookupEnv("METRICS_PORT"); ok {
+		metricsPort, err := strconv.ParseInt(mport, 10, 32)
+		if err != nil {
+			log.Fatalf("unable to parse METRICS_PORT as int: %s; error: %+v", mport, err)
+		}
+		config.Metrics.Port = int(metricsPort)
+	}
+
+	log.Printf("Starting simulator: %s", config.SimulatorID)
 
 	if cpuprofile != "" {
 		// disable logging and lower verbosity during profile
@@ -106,7 +136,7 @@ func main() {
 		log.Fatalf("unable to build location index: %+v", err)
 	}
 
-	packages, err := db.ActivePackages()
+	packages, err := db.ActivePackages(config.SimulatorID)
 	if err != nil {
 		log.Fatalf("unable to download packages from SingleStore: %+v", err)
 	}
