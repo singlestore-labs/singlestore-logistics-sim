@@ -1,7 +1,7 @@
 setup_redpanda() {
     local node_index=$(hostname | sed 's/^.*-\([0-9]\+\)$/\1/')
     local rp_nodes="$(metadata rp-nodes)"
-    local partitions_per_node=$(expr $(nproc) / 2)
+    local partitions_per_node=$(nproc)
     local default_partitions_per_topic=$(expr ${partitions_per_node} \* ${rp_nodes})
 
     mkdir -p /data/redpanda /var/lib/redpanda
