@@ -124,15 +124,13 @@ func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
 			GEOGRAPHY_LONGITUDE(pl.lonlat) AS longitude,
 			GEOGRAPHY_LATITUDE(pl.lonlat) AS latitude,
 
-			pt.kind AS transitionkind,
-			pt.seq AS transitionseq,
-			pt.locationid AS transitionlocationid,
-			pt.next_locationid AS transitionnextlocationid
+			s.kind AS transitionkind,
+			s.seq AS transitionseq,
+			s.locationid AS transitionlocationid,
+			s.next_locationid AS transitionnextlocationid
 		FROM packages p
-		INNER JOIN package_seqs s ON p.packageid = s.packageid
-		INNER JOIN package_transitions pt ON p.packageid = pt.packageid AND s.seq = pt.seq
+		INNER JOIN package_states s ON p.packageid = s.packageid
 		INNER JOIN package_locations pl ON p.packageid = pl.packageid
-		WHERE pt.kind != 'delivered'
 	`)
 }
 

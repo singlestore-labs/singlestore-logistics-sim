@@ -25,7 +25,7 @@ CREATE TABLE packages (
     -- express packages are delivered using the fastest method at each point
     method ENUM ('standard', 'express') NOT NULL,
 
-    KEY (packageid) USING CLUSTERED COLUMNSTORE,
+    KEY (received) USING CLUSTERED COLUMNSTORE,
     SHARD (packageid),
     UNIQUE KEY (packageid) USING HASH
 );
@@ -88,23 +88,30 @@ CREATE TABLE package_transitions (
         'delivered'
     ) NOT NULL,
 
-    KEY (packageid, seq) USING CLUSTERED COLUMNSTORE,
+    KEY (recorded) USING CLUSTERED COLUMNSTORE,
     KEY (packageid) USING HASH,
     SHARD (packageid)
 );
 
--- this table provides a mapping from package id to it's most recent sequence number
--- used to quickly join packages to their most recent transitions
-CREATE TABLE package_seqs (
+-- this table contains the most recent transition for each package
+-- rows are deleted from this table once the corresponding package is delivered
+CREATE TABLE package_states (
     packageid CHAR(36) NOT NULL,
     seq INT NOT NULL,
+    locationid BIGINT NOT NULL,
+    next_locationid BIGINT,
+    recorded DATETIME NOT NULL,
 
-    PRIMARY KEY (packageid)
+    -- kind can not be delivered in this table
+    kind ENUM ('arrival_scan', 'departure_scan') NOT NULL,
+
+    PRIMARY KEY (packageid),
+    INDEX (recorded),
+    INDEX (kind)
 );
 
 -- this table holds the realtime location of each active package
--- rows are eventually deleted from this table once the corresponding package
--- has been delievered
+-- rows are deleted from this table once the corresponding package is delivered
 CREATE TABLE package_locations (
     packageid CHAR(36) NOT NULL,
     lonlat GEOGRAPHYPOINT NOT NULL,
@@ -158,13 +165,22 @@ CREATE OR REPLACE PROCEDURE process_transitions(batch QUERY(
 ))
 AS
 BEGIN
-    REPLACE INTO package_transitions
-        (packageid, seq, locationid, next_locationid, recorded, kind)
+    REPLACE INTO package_transitions (packageid, seq, locationid, next_locationid, recorded, kind)
     SELECT * FROM batch;
 
-    INSERT INTO package_seqs (packageid, seq)
-    SELECT packageid, seq FROM batch
-    ON DUPLICATE KEY UPDATE seq = IF(VALUES(seq) > package_seqs.seq, VALUES(seq), package_seqs.seq);
+    INSERT INTO package_states (packageid, seq, locationid, next_locationid, recorded, kind)
+    SELECT * FROM batch
+    WHERE kind != "delivered"
+    ON DUPLICATE KEY UPDATE
+        seq = IF(VALUES(seq) > package_states.seq, VALUES(seq), package_states.seq),
+        locationid = IF(VALUES(seq) > package_states.seq, VALUES(locationid), package_states.locationid),
+        next_locationid = IF(VALUES(seq) > package_states.seq, VALUES(next_locationid), package_states.next_locationid),
+        recorded = IF(VALUES(seq) > package_states.seq, VALUES(recorded), package_states.recorded),
+        kind = IF(VALUES(seq) > package_states.seq, VALUES(kind), package_states.kind);
+
+    DELETE FROM package_states
+    WHERE packageid IN (SELECT packageid FROM batch WHERE kind = "delivered");
+
 END //
 
 DELIMITER ;
@@ -203,23 +219,27 @@ DELIMITER //
 
 CREATE OR REPLACE PROCEDURE process_locations(batch QUERY(
     packageid CHAR(36) NOT NULL,
-    position GEOGRAPHYPOINT NOT NULL,
+    lonlat GEOGRAPHYPOINT NOT NULL,
     recorded DATETIME NOT NULL
 ))
 AS
 BEGIN
-    UPDATE packages
-    INNER JOIN batch ON packages.packageid = batch.packageid
-    SET
-        packages.lonlat = batch.position,
-        packages.updated = batch.recorded;
+    INSERT INTO package_locations (packageid, lonlat, recorded)
+    SELECT * FROM batch
+    WHERE packageid IN (SELECT packageid FROM package_states)
+    ON DUPLICATE KEY UPDATE
+        lonlat = IF(VALUES(recorded) > package_locations.recorded, VALUES(lonlat), package_locations.lonlat),
+        recorded = IF(VALUES(recorded) > package_locations.recorded, VALUES(recorded), package_locations.recorded);
+
+    DELETE FROM package_locations
+    WHERE packageid NOT IN (SELECT packageid FROM package_states);
 END //
 
 DELIMITER ;
 
 CREATE PIPELINE locations
 AS LOAD DATA KAFKA 'rp-node-0/locations'
-INTO TABLE package_locations
+INTO PROCEDURE process_locations
 FORMAT AVRO (
     packageid <- PackageID,
     lonlat <- Position,
@@ -234,23 +254,6 @@ SCHEMA '{
         { "name": "Position", "type": "string" }
     ]
 }'
-SET
-    recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND)
-ON DUPLICATE KEY UPDATE
-    lonlat = IF(VALUES(recorded) > recorded, VALUES(lonlat), lonlat),
-    recorded = IF(VALUES(recorded) > recorded, VALUES(recorded), recorded);
+SET recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND);
 
 START PIPELINE locations;
-
--- useful views for analytics and apps
-
-CREATE VIEW package_states AS
-SELECT
-    p.*,
-    pt.kind AS last_transition,
-    pt.locationid AS last_locationid,
-    pt.next_locationid AS next_locationid,
-    pt.recorded AS updated
-FROM packages p
-INNER JOIN package_seqs s ON p.packageid = s.packageid
-INNER JOIN package_transitions pt ON p.packageid = pt.packageid AND s.seq = pt.seq;
