@@ -1,5 +1,8 @@
 setup_redpanda() {
     local node_index=$(hostname | sed 's/^.*-\([0-9]\+\)$/\1/')
+    local rp_nodes="$(metadata rp-nodes)"
+    local partitions_per_node=$(expr $(nproc) / 2)
+    local default_partitions_per_topic=$(expr ${partitions_per_node} \* ${rp_nodes})
 
     mkdir -p /data/redpanda /var/lib/redpanda
     mount --bind /data/redpanda /var/lib/redpanda
@@ -12,6 +15,7 @@ setup_redpanda() {
 
     rpk config set cluster_id redpanda
     rpk config set organization singlestore
+    rpk config set redpanda.default_topic_partitions ${default_partitions_per_topic}
 
     if [[ ${node_index} -eq 0 ]]; then
         rpk config bootstrap --id 0 --self $(hostname -i)

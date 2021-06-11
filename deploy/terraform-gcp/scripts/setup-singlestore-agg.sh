@@ -20,6 +20,8 @@ setup_singlestore_master() {
     memsqlctl bootstrap-aggregator --yes --host $(hostname)
     memsqlctl enable-high-availability --yes
 
+    memsqlctl update-config --yes --key default_partitions_per_leaf --value $(nproc) --set-global
+
     # setup aggs
     # start at 1 to skip the master (this node)
     for ((i = 1; i < ${num_aggs}; i++)); do

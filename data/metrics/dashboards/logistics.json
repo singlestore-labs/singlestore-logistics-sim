@@ -186,7 +186,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select latest_offset - successful_cursor_offset as transitions from information_schema.pipelines_cursors where pipeline_name = 'transitions'",
+          "rawSql": "select sum(latest_offset - successful_cursor_offset) as transitions from information_schema.pipelines_cursors where pipeline_name = 'transitions'",
           "refId": "A",
           "select": [
             [
@@ -215,7 +215,7 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select latest_offset - successful_cursor_offset as packages from information_schema.pipelines_cursors where pipeline_name = 'packages'",
+          "rawSql": "select sum(latest_offset - successful_cursor_offset) as packages from information_schema.pipelines_cursors where pipeline_name = 'packages'",
           "refId": "B",
           "select": [
             [
@@ -244,7 +244,7 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select latest_offset - successful_cursor_offset as locations from information_schema.pipelines_cursors where pipeline_name = 'locations'",
+          "rawSql": "select sum(latest_offset - successful_cursor_offset) as locations from information_schema.pipelines_cursors where pipeline_name = 'locations'",
           "refId": "C",
           "select": [
             [
