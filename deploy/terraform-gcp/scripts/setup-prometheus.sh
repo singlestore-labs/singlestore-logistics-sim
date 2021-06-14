@@ -1,4 +1,5 @@
 setup_prometheus() {
+    local node_exporter_targets=$(metadata node-exporter-targets)
     local simulator_targets=$(metadata simulator-targets)
     local redpanda_targets=$(metadata redpanda-targets)
 
@@ -12,6 +13,9 @@ global:
   evaluation_interval: '5s'
 
 scrape_configs:
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ${node_exporter_targets}
   - job_name: 'singlestore-logistics-simulator'
     static_configs:
       - targets: ${simulator_targets}

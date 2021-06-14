@@ -24,7 +24,7 @@ type State struct {
 	Clock     *Clock
 	Trackers  []Tracker
 	Locations *LocationIndex
-	Topics    Topics
+	Topics    *Topics
 
 	// CloseCh should be closed to stop the Simulation
 	CloseCh chan struct{}
@@ -45,12 +45,12 @@ type State struct {
 	AvgAirSpeedKMPH                  float64
 }
 
-func NewState(c *Config, locations *LocationIndex, topics Topics, initialTrackers []Tracker) *State {
+func NewState(c *Config, locations *LocationIndex, producer Producer, initialTrackers []Tracker) *State {
 	return &State{
 		Clock:     NewClock(c.StartTime, c.TickDuration),
 		Trackers:  initialTrackers,
 		Locations: locations,
-		Topics:    topics,
+		Topics:    NewTopics(producer),
 
 		CloseCh: make(chan struct{}),
 
@@ -76,6 +76,7 @@ func Simulate(state *State) {
 	for {
 		delta := state.Clock.Tick()
 		now := state.Clock.Now()
+		simulationTime.Set(float64(now.Unix()))
 
 		if state.MaxPackages <= 0 || len(state.Trackers) < state.MaxPackages {
 			numNewPackages := state.PackagesPerTick.Rand()

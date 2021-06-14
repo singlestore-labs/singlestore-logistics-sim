@@ -14,6 +14,8 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	github.com/satori/go.uuid v1.2.0
+	github.com/twmb/franz-go v0.8.3
+	github.com/twmb/franz-go/plugin/kprom v0.1.0
 	gonum.org/v1/gonum v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )

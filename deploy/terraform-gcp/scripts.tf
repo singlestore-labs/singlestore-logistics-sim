@@ -3,18 +3,13 @@ locals {
     file("${path.module}/scripts/lib.sh"),
     file("${path.module}/scripts/setup-disks.sh"),
     file("${path.module}/scripts/setup-apt.sh"),
+    file("${path.module}/scripts/setup-node-exporter.sh"),
   ]
 }
 
 resource "google_storage_bucket" "default" {
   name                        = var.storage_bucket
   uniform_bucket_level_access = true
-}
-
-resource "google_storage_bucket_iam_member" "service_account" {
-  bucket = google_storage_bucket.default.name
-  role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:${google_service_account.service_account.email}"
 }
 
 resource "google_storage_bucket_object" "grafana_dashboards" {

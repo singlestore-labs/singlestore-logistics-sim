@@ -28,6 +28,9 @@ CREATE TABLE packages (
     -- express packages are delivered using the fastest method at each point
     method ENUM ('standard', 'express') NOT NULL,
 
+    -- marks when the row was created
+    created DATETIME NOT NULL DEFAULT NOW(),
+
     KEY (received) USING CLUSTERED COLUMNSTORE,
     SHARD (packageid),
     UNIQUE KEY (packageid) USING HASH
@@ -81,6 +84,9 @@ CREATE TABLE package_transitions (
 
     -- when did this transition happen
     recorded DATETIME NOT NULL,
+
+    -- marks when the row was created
+    created DATETIME NOT NULL DEFAULT NOW(),
 
     kind ENUM (
         -- arrival scan means the package was received

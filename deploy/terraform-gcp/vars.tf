@@ -12,7 +12,7 @@ variable "project_name" {
 }
 
 variable "machine_image" {
-  # see https://cloud.google.com/compute/docs/images#os-compute-support" for
+  # see https://cloud.google.com/compute/docs/images#os-compute-support for
   # an updated list
   default = "ubuntu-os-cloud/ubuntu-1804-lts"
 }

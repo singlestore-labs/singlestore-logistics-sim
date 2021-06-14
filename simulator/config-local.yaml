@@ -1,4 +1,7 @@
 verbose: 0
+id: local
+
+num_workers: 2
 
 # max_delivered: 1
 

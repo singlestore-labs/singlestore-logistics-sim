@@ -42,6 +42,10 @@ type Config struct {
 	// SimulatorID must be a unique identifier for this process - if multiple simulators are running, each must have a unique id
 	SimulatorID string `yaml:"id"`
 
+	// NumWorkers controls the number of goroutines which will run the simulator
+	// set to 0 to use the number of cores on the machine
+	NumWorkers int `yaml:"num_workers"`
+
 	// SimInterval determines how fast the simulator runs
 	// set to 0 to cause the simulator to run as fast as possible
 	SimInterval time.Duration `yaml:"sim_interval"`

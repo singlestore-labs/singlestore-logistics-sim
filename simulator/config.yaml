@@ -4,8 +4,10 @@
 # logging - set to 0 to disable
 verbose: 0
 
+num_workers: 2
+
 # simulation speed - set to 0 to run the simulator as fast as possible
-sim_interval: 100ms
+sim_interval: 500ms
 
 # amount of time to simulate each tick
 tick_duration: 1h

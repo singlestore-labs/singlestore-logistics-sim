@@ -7,8 +7,11 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/pprof"
 	"simulator"
+	"sync"
+	"syscall"
 	"time"
 
 	"cuelang.org/go/pkg/strconv"
@@ -73,7 +76,7 @@ func main() {
 		config.Metrics.Port = int(metricsPort)
 	}
 
-	log.Printf("Starting simulator: %s", config.SimulatorID)
+	log.Printf("Simulator ID: %s", config.SimulatorID)
 
 	if cpuprofile != "" {
 		// disable logging and lower verbosity during profile
@@ -105,9 +108,9 @@ func main() {
 	}
 	defer db.Close()
 
-	var topics simulator.Topics
+	var producer simulator.Producer
 	for {
-		topics, err = simulator.NewRedpanda(config.Topics)
+		producer, err = simulator.NewFranzProducer(config.Topics.Brokers)
 		if err != nil {
 			log.Printf("unable to connect to Redpanda: %s; retrying...", err)
 			time.Sleep(time.Second)
@@ -115,7 +118,7 @@ func main() {
 		}
 		break
 	}
-	defer topics.Close()
+	defer producer.Close()
 
 	if config.StartTime.IsZero() {
 		start, err := db.CurrentTime()
@@ -124,8 +127,6 @@ func main() {
 		}
 		config.StartTime = start
 	}
-
-	log.Printf("starting simulation at %s", config.StartTime)
 
 	locations, err := db.Locations()
 	if err != nil {
@@ -146,16 +147,45 @@ func main() {
 		log.Fatalf("unable to download locations from SingleStore: %+v", err)
 	}
 
-	state := simulator.NewState(config, index, topics, trackers)
-
 	// Trap SIGINT to trigger a shutdown.
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+	closeChannels := make([]chan struct{}, 0)
+	wg := sync.WaitGroup{}
 
 	go func() {
-		<-signals
-		close(state.CloseCh)
+		sig := <-signals
+		log.Printf("received shutdown signal: %s", sig)
+		for _, ch := range closeChannels {
+			close(ch)
+		}
 	}()
 
-	simulator.Simulate(state)
+	numWorkers := runtime.NumCPU()
+	if config.NumWorkers != 0 {
+		numWorkers = config.NumWorkers
+	}
+
+	log.Printf("starting simulation at %s with %d workers", config.StartTime, numWorkers)
+
+	initTrackersPerWorker := len(trackers) / numWorkers
+	var initTrackers []simulator.Tracker
+
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+
+		initTrackers, trackers = trackers[:initTrackersPerWorker], trackers[initTrackersPerWorker:]
+
+		state := simulator.NewState(config, index, producer, initTrackers)
+		closeChannels = append(closeChannels, state.CloseCh)
+
+		go func(i int) {
+			defer wg.Done()
+			simulator.Simulate(state)
+			log.Printf("worker %d exited", i)
+		}(i)
+	}
+
+	wg.Wait()
 }
