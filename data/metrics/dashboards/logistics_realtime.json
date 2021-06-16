@@ -15,7 +15,6 @@
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "id": 3,
     "links": [],
     "panels": [
         {
@@ -129,7 +128,7 @@
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "Package transitions (stacked)",
+            "title": "Package transitions",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -213,18 +212,18 @@
             "renderer": "flot",
             "seriesOverrides": [],
             "spaceLength": 10,
-            "stack": false,
+            "stack": true,
             "steppedLine": false,
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(irate(vectorized_storage_log_written_bytes[$__interval]))",
+                    "expr": "sum(irate(vectorized_storage_log_written_bytes[$__interval])) by (topic)",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
                     "interval": "",
                     "intervalFactor": 2,
-                    "legendFormat": "bytes",
+                    "legendFormat": "{{topic}}",
                     "refId": "A",
                     "step": 10
                 }
@@ -236,7 +235,7 @@
             "title": "Redpanda - Total number of bytes written",
             "tooltip": {
                 "shared": true,
-                "sort": 0,
+                "sort": 2,
                 "value_type": "individual"
             },
             "type": "graph",
@@ -317,18 +316,18 @@
             "renderer": "flot",
             "seriesOverrides": [],
             "spaceLength": 10,
-            "stack": false,
+            "stack": true,
             "steppedLine": false,
             "targets": [
                 {
                     "exemplar": true,
-                    "expr": "sum(irate(vectorized_storage_log_read_bytes[$__interval]))",
+                    "expr": "sum(irate(vectorized_storage_log_read_bytes[$__interval])) by (topic)",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
                     "interval": "",
                     "intervalFactor": 2,
-                    "legendFormat": "bytes",
+                    "legendFormat": "{{topic}}",
                     "refId": "A",
                     "step": 10
                 }
@@ -340,7 +339,7 @@
             "title": "Redpanda - Total number of bytes read",
             "tooltip": {
                 "shared": true,
-                "sort": 0,
+                "sort": 2,
                 "value_type": "individual"
             },
             "type": "graph",
@@ -455,7 +454,7 @@
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "Ingest rate by pipeline (stacked)",
+            "title": "Ingest rate by pipeline",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -510,5 +509,5 @@
     "timezone": "",
     "title": "logistics real-time",
     "uid": "QsfrzDgnz",
-    "version": 6
+    "version": 1
 }

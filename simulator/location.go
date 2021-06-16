@@ -1,7 +1,7 @@
 package simulator
 
 import (
-	"container/list"
+	"container/heap"
 	"simulator/enum"
 
 	"github.com/paulmach/orb"
@@ -11,8 +11,11 @@ import (
 )
 
 var (
-	nearestCount = 3
+	nearestCount = 5
 	empty        = struct{}{}
+
+	// 200km squared
+	minDistanceSquared = float64(200 * 1000 * 200 * 1000)
 )
 
 type Location struct {
@@ -35,20 +38,50 @@ func NewLocationFromDB(dbloc DBLocation) *Location {
 	}
 }
 
-type LocationQueue struct {
-	list.List
+type LocationQueueItem struct {
+	loc                   *Location
+	distanceToDestination float64
 }
 
-func NewLocationQueue() *LocationQueue {
-	q := LocationQueue{}
-	q.Init()
-	return &q
+type LocationQueue []*LocationQueueItem
+
+var _ heap.Interface = &LocationQueue{}
+
+func NewLocationQueue() LocationQueue {
+	return LocationQueue(make(LocationQueue, 0, nearestCount*4))
 }
 
-func (q *LocationQueue) Pop() *Location {
-	out := q.List.Front()
-	q.List.Remove(out)
-	return out.Value.(*Location)
+func (l LocationQueue) Len() int { return len(l) }
+func (l LocationQueue) Less(i, j int) bool {
+	return l[i].distanceToDestination > l[j].distanceToDestination
+}
+func (l LocationQueue) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
+
+// add x as element Len()
+func (l *LocationQueue) Push(x interface{}) {
+	*l = append(*l, x.(*LocationQueueItem))
+}
+
+// remove and return element Len() - 1
+func (l *LocationQueue) Pop() interface{} {
+	old := *l
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil
+	*l = old[0 : n-1]
+	return item
+}
+
+func (l *LocationQueue) PushLocation(loc *Location, distanceToDestination float64) {
+	heap.Push(l, &LocationQueueItem{
+		loc:                   loc,
+		distanceToDestination: distanceToDestination,
+	})
+}
+
+func (l *LocationQueue) PopLocation() (*Location, float64) {
+	item := heap.Pop(l).(*LocationQueueItem)
+	return item.loc, item.distanceToDestination
 }
 
 type LocationIndex struct {
@@ -90,23 +123,29 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 	// our current squared distance to the destination
 	currentToDestination := planar.DistanceSquared(current.Position, destination.Position)
 
-	// 200km squared
-	minDistanceSquared := float64(200 * 1000 * 200 * 1000)
-
 	seen := make(map[int64]struct{})
 	seen[current.LocationID] = empty
 
 	q := NewLocationQueue()
-	q.PushBack(current)
+	q.PushLocation(current, 0)
 
 	for q.Len() > 0 {
-		candidate := q.Pop()
+		candidate, distanceToDestination := q.PopLocation()
 
-		// queue unseen neighbors
+		// prepend unseen neighbors based on distance to destination
 		for _, neighbor := range candidate.Nearest {
 			if _, ok := seen[neighbor.LocationID]; !ok {
 				seen[neighbor.LocationID] = empty
-				q.PushBack(neighbor)
+
+				// if one of the neighbors is our destination, select it
+				if candidate.LocationID == destination.LocationID {
+					return candidate
+				}
+
+				// get the distance from the neighbor location to our destination
+				neighborToDestination := planar.DistanceSquared(neighbor.Position, destination.Position)
+				q.PushLocation(current, neighborToDestination)
+
 			}
 		}
 
@@ -114,9 +153,9 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 			continue
 		}
 
-		// if one of the nearest locations is our destination, select it
-		if candidate.LocationID == destination.LocationID {
-			return candidate
+		// make sure we only consider candidates who are closer to the destination than we are
+		if distanceToDestination >= currentToDestination {
+			continue
 		}
 
 		// if we are express shipping then only consider hubs
@@ -132,13 +171,8 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 			continue
 		}
 
-		// get the distance from the candidate location to our destination
-		candidateToDestination := planar.DistanceSquared(candidate.Position, destination.Position)
-
-		// make sure we always move towards our destination
-		if candidateToDestination < currentToDestination {
-			return candidate
-		}
+		// we found our match
+		return candidate
 	}
 
 	// if we fail to find the next nearest location - just send the package directly to the destination

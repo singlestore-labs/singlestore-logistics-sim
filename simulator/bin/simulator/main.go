@@ -108,18 +108,6 @@ func main() {
 	}
 	defer db.Close()
 
-	var producer simulator.Producer
-	for {
-		producer, err = simulator.NewFranzProducer(config.Topics.Brokers)
-		if err != nil {
-			log.Printf("unable to connect to Redpanda: %s; retrying...", err)
-			time.Sleep(time.Second)
-			continue
-		}
-		break
-	}
-	defer producer.Close()
-
 	if config.StartTime.IsZero() {
 		start, err := db.CurrentTime()
 		if err != nil {
@@ -176,6 +164,18 @@ func main() {
 		wg.Add(1)
 
 		initTrackers, trackers = trackers[:initTrackersPerWorker], trackers[initTrackersPerWorker:]
+
+		var producer simulator.Producer
+		for {
+			producer, err = simulator.NewFranzProducer(config.Topics.Brokers)
+			if err != nil {
+				log.Printf("unable to connect to Redpanda: %s; retrying...", err)
+				time.Sleep(time.Second)
+				continue
+			}
+			break
+		}
+		defer producer.Close()
 
 		state := simulator.NewState(config, index, producer, initTrackers)
 		closeChannels = append(closeChannels, state.CloseCh)

@@ -5,17 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-)
-
-var (
-	simulationTime = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "simulator",
-		Name:      "simulation_time",
-		Help:      "The latest simulation time (unix timestamp) - may not always increase as it's updated from multiple unsyncronized simulation threads",
-	})
 )
 
 func ExportMetrics(config MetricsConfig) {

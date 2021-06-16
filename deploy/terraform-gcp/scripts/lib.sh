@@ -26,3 +26,11 @@ metadata() {
         -H "Metadata-Flavor: Google" \
         "${METADATA_BASE}/${key}"
 }
+
+retry() {
+    local argv=("${@}")
+    until "${argv[@]}"; do
+        log "'${argv[*]}' failed, retrying"
+        sleep 1
+    done
+}

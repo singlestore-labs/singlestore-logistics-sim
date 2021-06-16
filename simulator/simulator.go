@@ -76,7 +76,6 @@ func Simulate(state *State) {
 	for {
 		delta := state.Clock.Tick()
 		now := state.Clock.Now()
-		simulationTime.Set(float64(now.Unix()))
 
 		if state.MaxPackages <= 0 || len(state.Trackers) < state.MaxPackages {
 			numNewPackages := state.PackagesPerTick.Rand()
@@ -133,7 +132,7 @@ func Simulate(state *State) {
 
 		totalDelivered += numDelivered
 
-		if state.Verbose >= VerboseDebug {
+		if state.Verbose >= VerboseInfo {
 			log.Printf("TICK: tracked(%d) delivered(%d/%d)", len(state.Trackers), totalDelivered, state.MaxDelivered)
 		}
 
@@ -218,7 +217,7 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 			NextTransitionTime: nextTransitionTime,
 		})
 
-		if state.Verbose >= VerboseInfo {
+		if state.Verbose >= VerboseDebug {
 			log.Printf("CreatePackage(%s): origin(%s) destination(%s) method(%s) distance(%f)",
 				pkg.PackageID.String()[:8],
 				AvroPoint(origin.Position),
@@ -269,10 +268,12 @@ func UpdatePosition(state *State, t *Tracker, delta time.Duration) bool {
 		)
 	}
 
-	err := state.Topics.WriteLocation(state.Clock.Now(), t)
-	if err != nil {
-		log.Panicf("failed to write location to topic: %v", err)
-	}
+	/*
+		err := state.Topics.WriteLocation(state.Clock.Now(), t)
+		if err != nil {
+			log.Panicf("failed to write location to topic: %v", err)
+		}
+	*/
 
 	return reachedDestination
 }
@@ -310,7 +311,7 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 	t.NextLocationID = nextLocation.LocationID
 	t.NextLocationPosition = nextLocation.Position
 
-	if state.Verbose >= VerboseInfo {
+	if state.Verbose >= VerboseDebug {
 		log.Printf("DepartureScan(%s): loc(%s) speed(%d) target(%s) dist(%f)",
 			t.PackageID.String()[:8],
 			AvroPoint(currentLocation.Position),
@@ -339,7 +340,7 @@ func TriggerArrivalScan(state *State, t *Tracker) {
 	now := state.Clock.Now()
 	t.NextTransitionTime = now.Add(time.Hour * time.Duration(state.HoursAtRest.Rand()))
 
-	if state.Verbose >= VerboseInfo {
+	if state.Verbose >= VerboseDebug {
 		currentLocation, err := state.Locations.Lookup(t.LastLocationID)
 		if err != nil {
 			log.Panic(err)
@@ -368,7 +369,7 @@ func TriggerDelivered(state *State, t *Tracker) {
 	t.Seq = t.Seq + 1
 	t.LastLocationID = t.NextLocationID
 
-	if state.Verbose >= VerboseInfo {
+	if state.Verbose >= VerboseDebug {
 		currentLocation, err := state.Locations.Lookup(t.LastLocationID)
 		if err != nil {
 			log.Panic(err)

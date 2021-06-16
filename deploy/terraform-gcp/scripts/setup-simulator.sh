@@ -9,7 +9,7 @@ setup_simulator() {
 tick_duration: 1h
 
 # maximum number of packages to simulate at any point (0 = unlimited)
-max_packages: 150000
+max_packages: 200000
 
 # number of packages to generate per tick
 packages_per_tick:
@@ -46,15 +46,18 @@ database:
 topics:
   brokers:
     - rp-node-0:9092
+
+metrics:
+  port: 9000
 EOF
 
-    cat >/etc/systemd/system/simulator\@.service <<EOF
+    cat >/etc/systemd/system/simulator.service <<EOF
 [Unit]
 Description=SingleStore Logistics Simulator
 After=network.target
 
 [Service]
-Environment=SIMULATOR_ID=$(hostname)-%i METRICS_PORT=900%i
+Environment=SIMULATOR_ID=$(hostname)
 Restart=always
 RestartSec=1
 ExecStart=/usr/bin/simulator --config /etc/simulator/config.yaml
@@ -63,13 +66,9 @@ ExecStart=/usr/bin/simulator --config /etc/simulator/config.yaml
 WantedBy=multi-user.target
 EOF
 
-    local workers=$(expr $(nproc) / 2)
-    # eval handles the double expansion (${workers} then {1..n})
-    local services=$(eval echo simulator\@{1..${workers}}.service)
-
-    systemctl enable ${services}
+    systemctl enable simulator
     systemctl daemon-reload
-    systemctl start ${services}
+    systemctl start simulator
 }
 
 run_or_die setup_simulator

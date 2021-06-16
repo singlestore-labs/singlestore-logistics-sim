@@ -124,16 +124,17 @@ type FranzProducer struct {
 	cancelWrites context.CancelFunc
 }
 
-func NewFranzProducer(brokers []string) (Producer, error) {
-	reg := prometheus.DefaultRegisterer.(*prometheus.Registry)
-	m := kprom.NewMetrics("franzgo", kprom.Registry(reg))
+var (
+	kpromMetrics = kprom.NewMetrics("franzgo", kprom.Registry(prometheus.DefaultRegisterer.(*prometheus.Registry)))
+)
 
+func NewFranzProducer(brokers []string) (Producer, error) {
 	client, err := kgo.NewClient(
 		kgo.SeedBrokers(brokers...),
-		kgo.WithHooks(m),
-		kgo.MetadataMinAge(time.Minute),
-		kgo.BatchCompression(kgo.Lz4Compression(), kgo.SnappyCompression(), kgo.NoCompression()),
-		kgo.MaxBufferedRecords(1000000),
+		kgo.WithHooks(kpromMetrics),
+		kgo.BatchCompression(kgo.Lz4Compression(), kgo.NoCompression()),
+		kgo.MaxBufferedRecords(1e7),
+		kgo.BatchMaxBytes(64*1024),
 	)
 	if err != nil {
 		return nil, err
@@ -184,11 +185,14 @@ func (w *FranzWriter) Write(d []byte) (int, error) {
 	r := kgo.SliceRecord(d)
 	r.Topic = w.topic
 
-	w.p.client.Produce(w.p.writeContext, r, func(r *kgo.Record, err error) {
-		if err != nil && err != context.Canceled && err != kgo.ErrClientClosed {
-			log.Printf("FranzProducer error on topic %s: %+v", w.topic, err)
-		}
-	})
+	w.p.client.Produce(w.p.writeContext, r, nil)
+	/*
+		w.p.client.Produce(w.p.writeContext, r, func(r *kgo.Record, err error) {
+			if err != nil && err != context.Canceled && err != kgo.ErrClientClosed {
+				log.Printf("FranzProducer error on topic %s: %+v", w.topic, err)
+			}
+		})
+	*/
 
 	return len(d), nil
 }

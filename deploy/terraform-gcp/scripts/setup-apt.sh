@@ -1,8 +1,8 @@
 setup_apt() {
-    apt update
-    apt upgrade -y
+    retry apt update
+    retry apt upgrade -y
 
-    apt install -y \
+    retry apt install -y \
         apt-transport-https ca-certificates curl \
         git gnupg lsb-release iftop
 }
