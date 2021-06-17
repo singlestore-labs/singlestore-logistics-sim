@@ -1,12 +1,12 @@
 verbose: 0
-id: local
+id: local2
 
-num_workers: 8
+num_workers: 4
 
 max_delivered: 1_000_000
 
 # sim_interval: 1s
-max_packages: 1_000_000
+max_packages: 100_000
 
 packages_per_tick:
   avg: 100_000

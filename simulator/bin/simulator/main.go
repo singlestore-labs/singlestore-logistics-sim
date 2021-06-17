@@ -171,7 +171,7 @@ func main() {
 
 		var producer simulator.Producer
 		for {
-			producer, err = simulator.NewFranzProducer(config.Topics.Brokers)
+			producer, err = simulator.NewFranzProducer(config.Topics)
 			if err != nil {
 				log.Printf("unable to connect to Redpanda: %s; retrying...", err)
 				time.Sleep(time.Second)

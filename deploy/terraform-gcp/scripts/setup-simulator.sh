@@ -6,7 +6,7 @@ setup_simulator() {
     mkdir -p /etc/simulator
     cat >/etc/simulator/config.yaml <<EOF
 # maximum number of packages to simulate at any point (0 = unlimited)
-max_packages: 200000
+max_packages: 1_000_000
 
 # number of packages to generate per tick
 packages_per_tick:
@@ -41,6 +41,8 @@ database:
   database: logistics
 
 topics:
+  compression: false
+  batch_max_bytes: 65535   # 64 * 1024
   brokers:
     - rp-node-0:9092
 

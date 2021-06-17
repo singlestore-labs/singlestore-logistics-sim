@@ -190,8 +190,15 @@ func (idx *LocationIndex) NextLocation(current *Location, destination *Location,
 	currentToDestination := geo.Distance(current.Position, destination.Position)
 
 	// min distance should be at least 1/2 of the remaining distance to the destination
-	// or 200km, whichever is larger
-	minDistance := math.Max(currentToDestination / 2, 200*1000)
+	// or 1000km, whichever is larger
+	minDistance := math.Max(currentToDestination/2, 1000*1000)
+
+	if currentToDestination < minDistance {
+		if idx.debugLogging {
+			log.Println("NextLocation: destination is closer than min distance; selecting")
+		}
+		return destination
+	}
 
 	seen := make(map[*Location]struct{})
 	seen[current] = empty

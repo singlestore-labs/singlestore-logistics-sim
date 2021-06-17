@@ -29,14 +29,21 @@ var (
 	kpromMetrics = kprom.NewMetrics("franzgo", kprom.Registry(prometheus.DefaultRegisterer.(*prometheus.Registry)))
 )
 
-func NewFranzProducer(brokers []string) (Producer, error) {
-	client, err := kgo.NewClient(
-		kgo.SeedBrokers(brokers...),
+func NewFranzProducer(config TopicsConfig) (Producer, error) {
+	opts := []kgo.Opt{
+		kgo.SeedBrokers(config.Brokers...),
 		kgo.WithHooks(kpromMetrics),
-		kgo.BatchCompression(kgo.Lz4Compression(), kgo.NoCompression()),
 		kgo.MaxBufferedRecords(1e7),
-		kgo.BatchMaxBytes(64*1024),
-	)
+		kgo.BatchMaxBytes(int32(config.BatchMaxBytes)),
+	}
+
+	if config.Compression {
+		opts = append(opts, kgo.BatchCompression(kgo.Lz4Compression()))
+	} else {
+		opts = append(opts, kgo.BatchCompression(kgo.NoCompression()))
+	}
+
+	client, err := kgo.NewClient(opts...)
 	if err != nil {
 		return nil, err
 	}

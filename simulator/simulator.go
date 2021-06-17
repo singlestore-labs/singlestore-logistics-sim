@@ -120,22 +120,26 @@ func Simulate(state *State) {
 			}
 		}
 
-		// remove trackers for delivered packages and determine the next transition time
-		nextTransitionTime := state.Trackers[0].NextTransitionTime
-		newTrackers := make([]Tracker, 0, len(state.Trackers)-numDelivered)
-		for i := range state.Trackers {
-			tracker := &state.Trackers[i]
-			if tracker.NextTransitionTime.Before(nextTransitionTime) {
-				nextTransitionTime = tracker.NextTransitionTime
+		if len(state.Trackers) > 0 {
+			// remove trackers for delivered packages and determine the next transition time
+			nextTransitionTime := state.Trackers[0].NextTransitionTime
+			newTrackers := make([]Tracker, 0, len(state.Trackers)-numDelivered)
+			for i := range state.Trackers {
+				tracker := &state.Trackers[i]
+				if tracker.NextTransitionTime.Before(nextTransitionTime) {
+					nextTransitionTime = tracker.NextTransitionTime
+				}
+				if !tracker.Delivered {
+					newTrackers = append(newTrackers, *tracker)
+				}
 			}
-			if !tracker.Delivered {
-				newTrackers = append(newTrackers, *tracker)
-			}
-		}
-		state.Trackers = newTrackers
+			state.Trackers = newTrackers
 
-		// advance the clock
-		state.Clock.Set(nextTransitionTime)
+			// advance the clock
+			state.Clock.Set(nextTransitionTime)
+		} else {
+			state.Clock.Tick(time.Hour)
+		}
 
 		totalDelivered += numDelivered
 
@@ -228,10 +232,6 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 }
 
 func TriggerDepartureScan(state *State, t *Tracker) {
-	if t.State != enum.AtRest {
-		log.Panicf("TriggerDepartureScan can only be called when State == AtRest")
-	}
-
 	currentLocation, err := state.Locations.Lookup(t.LastLocationID)
 	if err != nil {
 		log.Panic(err)
@@ -277,10 +277,6 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 }
 
 func TriggerArrivalScan(state *State, t *Tracker) {
-	if t.State != enum.InTransit {
-		log.Panicf("TriggerArrivalScan can only be called when State == InTransit")
-	}
-
 	// update tracker state fields
 	t.State = enum.AtRest
 	t.Seq = t.Seq + 1
@@ -309,10 +305,6 @@ func TriggerArrivalScan(state *State, t *Tracker) {
 }
 
 func TriggerDelivered(state *State, t *Tracker) {
-	if t.State != enum.InTransit {
-		log.Panicf("TriggerDelivered can only be called when State == InTransit")
-	}
-
 	// update tracker state fields
 	t.Delivered = true
 	t.State = enum.AtRest

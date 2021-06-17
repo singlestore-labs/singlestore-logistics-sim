@@ -17,7 +17,9 @@ type DatabaseConfig struct {
 }
 
 type TopicsConfig struct {
-	Brokers []string `yaml:"brokers"`
+	Brokers       []string `yaml:"brokers"`
+	Compression   bool     `yaml:"compression"`
+	BatchMaxBytes int      `yaml:"batch_max_bytes"`
 }
 
 type MetricsConfig struct {

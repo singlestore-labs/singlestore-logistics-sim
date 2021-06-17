@@ -48,6 +48,8 @@ database:
   database: logistics
 
 topics:
+  compression: false
+  batch_max_bytes: 65535   # 64 * 1024
   brokers:
     - rp-node-0:9092
 
