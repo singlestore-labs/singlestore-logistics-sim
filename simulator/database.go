@@ -24,6 +24,7 @@ type DBLocation struct {
 	Kind       enum.LocationKind
 	Longitude  float64
 	Latitude   float64
+	Population int
 }
 
 type DBActivePackage struct {
@@ -104,8 +105,9 @@ func (s *SingleStore) Locations() ([]DBLocation, error) {
 		SELECT
 			locationid,
 			kind,
-			geography_longitude(lonlat) as longitude,
-			geography_latitude(lonlat) as latitude
+			geography_longitude(lonlat) AS longitude,
+			geography_latitude(lonlat) AS latitude,
+			city_population AS population
 		FROM locations
 	`)
 }

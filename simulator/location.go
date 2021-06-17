@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"math/rand"
 	"simulator/enum"
+	"sort"
+	"time"
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geo"
-	"github.com/paulmach/orb/planar"
 	"github.com/paulmach/orb/quadtree"
 	"github.com/pkg/errors"
 )
@@ -22,6 +24,7 @@ type Location struct {
 	LocationID  int64
 	Kind        enum.LocationKind
 	Position    orb.Point
+	Population  int
 	Nearest     []*Location
 	NearestHubs []*Location
 }
@@ -35,7 +38,8 @@ func NewLocationFromDB(dbloc DBLocation) *Location {
 	return &Location{
 		LocationID: dbloc.LocationID,
 		Kind:       dbloc.Kind,
-		Position:   NewPointFromWGS84(dbloc.Longitude, dbloc.Latitude),
+		Position:   orb.Point{dbloc.Longitude, dbloc.Latitude},
+		Population: dbloc.Population,
 	}
 }
 
@@ -88,8 +92,12 @@ func (l *LocationQueue) PopLocation() (*Location, float64) {
 }
 
 type LocationIndex struct {
-	qt           *quadtree.Quadtree
-	ht           map[int64]*Location
+	qt            *quadtree.Quadtree
+	ht            map[int64]*Location
+	popSorted     []*Location
+	minPopulation int
+	maxPopulation int
+
 	debugLogging bool
 }
 
@@ -97,6 +105,7 @@ func NewLocationIndexFromDB(dblocs []DBLocation, debugLogging bool) (*LocationIn
 	idx := &LocationIndex{
 		qt:           quadtree.New(orb.Bound{Min: minGeoPoint, Max: maxGeoPoint}),
 		ht:           make(map[int64]*Location),
+		popSorted:    make([]*Location, 0, len(dblocs)),
 		debugLogging: debugLogging,
 	}
 	for _, dbloc := range dblocs {
@@ -106,7 +115,15 @@ func NewLocationIndexFromDB(dblocs []DBLocation, debugLogging bool) (*LocationIn
 			return nil, errors.WithStack(err)
 		}
 		idx.ht[loc.LocationID] = loc
+		idx.popSorted = append(idx.popSorted, loc)
 	}
+
+	// popSorted must be sorted by population
+	sort.Slice(idx.popSorted, func(i, j int) bool {
+		return idx.popSorted[i].Population < idx.popSorted[j].Population
+	})
+	idx.minPopulation = idx.popSorted[0].Population
+	idx.maxPopulation = idx.popSorted[len(idx.popSorted)-1].Population
 
 	const (
 		Pi      = math.Pi
@@ -114,8 +131,6 @@ func NewLocationIndexFromDB(dblocs []DBLocation, debugLogging bool) (*LocationIn
 	)
 
 	locationFilter := func(origin *Location, direction string, kind enum.LocationKind) func(p orb.Pointer) bool {
-		normOrigin := normalizePoint(origin.Position)
-
 		return func(p orb.Pointer) bool {
 			loc := p.(*Location)
 			if loc == origin {
@@ -125,35 +140,17 @@ func NewLocationIndexFromDB(dblocs []DBLocation, debugLogging bool) (*LocationIn
 				return false
 			}
 
-			normLoc := normalizePoint(loc.Position)
-
-			dx := normLoc[0] - normOrigin[0]
-			dy := normLoc[1] - normOrigin[1]
-
-			if dx < -0.5 {
-				dx += 1
-			}
-			if dx > 0.5 {
-				dx -= 1
-			}
-			if dy < -0.5 {
-				dy += 1
-			}
-			if dy > 0.5 {
-				dy -= 1
-			}
-
-			angle := math.Atan2(dy, dx)
+			angle := geo.Bearing(origin.Position, loc.Position)
 
 			switch direction {
 			case "ne":
-				return angle > 0 && angle <= PiOver2
+				return angle > 0 && angle <= 90
 			case "nw":
-				return angle > PiOver2 && angle <= Pi
+				return angle > 90 && angle <= 180
 			case "sw":
-				return angle > -Pi && angle <= -PiOver2
+				return angle > -180 && angle <= -90
 			case "se":
-				return angle > -PiOver2 && angle <= 0
+				return angle > -90 && angle <= 0
 			}
 
 			panic(fmt.Sprintf("unknown direction: '%s'", direction))
@@ -165,7 +162,9 @@ func NewLocationIndexFromDB(dblocs []DBLocation, debugLogging bool) (*LocationIn
 	directions := []string{"ne", "nw", "sw", "se"}
 	buf := make([]orb.Pointer, 0, nearestPerDirection)
 
-	for _, loc := range idx.ht {
+	start := time.Now()
+	log.Printf("generating knearest location index, this can take awhile...")
+	for _, loc := range idx.popSorted {
 		loc.Nearest = make([]*Location, 0, nearestPerDirection*4)
 		loc.NearestHubs = make([]*Location, 0, nearestPerDirection*4)
 
@@ -181,15 +180,18 @@ func NewLocationIndexFromDB(dblocs []DBLocation, debugLogging bool) (*LocationIn
 		}
 	}
 
+	log.Printf("finished generating knearest location index in %s", time.Since(start))
+
 	return idx, nil
 }
 
-func (i *LocationIndex) NextLocation(current *Location, destination *Location, method enum.DeliveryMethod) *Location {
+func (idx *LocationIndex) NextLocation(current *Location, destination *Location, method enum.DeliveryMethod) *Location {
 	// our current squared distance to the destination
-	currentToDestination := planar.DistanceSquared(current.Position, destination.Position)
+	currentToDestination := geo.Distance(current.Position, destination.Position)
 
 	// min distance should be at least 1/2 of the remaining distance to the destination
-	minDistanceSquared := math.Pow(math.Sqrt(currentToDestination)/2, 2)
+	// or 200km, whichever is larger
+	minDistance := math.Max(currentToDestination / 2, 200*1000)
 
 	seen := make(map[*Location]struct{})
 	seen[current] = empty
@@ -197,12 +199,12 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 	q := NewLocationQueue()
 	q.PushLocation(current, 0, currentToDestination)
 
-	if i.debugLogging {
-		log.Printf("NextLocation: remaining distance = %0.2fkm", math.Sqrt(currentToDestination)/1000)
+	if idx.debugLogging {
+		log.Printf("NextLocation: current to destination = %0.2fkm", currentToDestination/1000)
 	}
 
 	considered := 0
-	if i.debugLogging {
+	if idx.debugLogging {
 		defer func() {
 			log.Printf("NextLocation considered %d candidates, remaining queue size: %d", considered, q.Len())
 		}()
@@ -211,10 +213,6 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 	for q.Len() > 0 {
 		candidate, distanceToDestination := q.PopLocation()
 		considered++
-
-		if i.debugLogging {
-			log.Printf("NextLocation: candidate distance = %0.2fkm", math.Sqrt(distanceToDestination)/1000)
-		}
 
 		nearest := candidate.Nearest
 		if method == enum.Express {
@@ -227,7 +225,7 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 				seen[neighbor] = empty
 
 				// get the distance from the neighbor location to our destination
-				neighborToDestination := planar.DistanceSquared(neighbor.Position, destination.Position)
+				neighborToDestination := geo.Distance(neighbor.Position, destination.Position)
 
 				// calculate the diff
 				// if diff is negative then we are moving the wrong direction
@@ -247,9 +245,13 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 			continue
 		}
 
+		if idx.debugLogging {
+			log.Printf("NextLocation: candidate (distance to destination = %0.2fkm)", distanceToDestination/1000)
+		}
+
 		// if one of the candidates is our destination, select it
 		if candidate.LocationID == destination.LocationID {
-			if i.debugLogging {
+			if idx.debugLogging {
 				log.Println("selecting: candidate = destination")
 			}
 			return candidate
@@ -257,7 +259,7 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 
 		// make sure we only consider candidates who are closer to the destination than we are
 		if distanceToDestination >= currentToDestination {
-			if i.debugLogging {
+			if idx.debugLogging {
 				log.Println("skipping: candidate wrong direction")
 			}
 
@@ -267,7 +269,7 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 			// hub and thus all the candidates are farther away
 			// for this last leg we need to use standard shipping
 			if method == enum.Express {
-				return i.NextLocation(current, destination, enum.Standard)
+				return idx.NextLocation(current, destination, enum.Standard)
 			}
 
 			continue
@@ -275,54 +277,70 @@ func (i *LocationIndex) NextLocation(current *Location, destination *Location, m
 
 		// if we are express shipping then only consider hubs
 		if method == enum.Express && candidate.Kind != enum.Hub {
-			if i.debugLogging {
+			if idx.debugLogging {
 				log.Println("skipping: express shipping, candidate not a hub")
 			}
 			continue
 		}
 
 		// get the distance from our current location to the candidate
-		currentToCandidate := planar.DistanceSquared(current.Position, candidate.Position)
+		currentToCandidate := geo.Distance(current.Position, candidate.Position)
 
 		// only select destinations at least min distance away
-		if currentToCandidate < minDistanceSquared {
-			if i.debugLogging {
+		if currentToCandidate < minDistance {
+			if idx.debugLogging {
 				log.Printf(
-					"skipping: candidate(%0.2fkm) < minDistance(%0.2fkm)",
-					math.Sqrt(currentToCandidate)/1000,
-					math.Sqrt(minDistanceSquared)/1000,
+					"skipping: distance(%0.2fkm) < minDistance(%0.2fkm)",
+					currentToCandidate/1000,
+					minDistance/1000,
 				)
 			}
 			continue
 		}
 
 		// we found our match
-		if i.debugLogging {
-			log.Println("selecting: candidate")
+		if idx.debugLogging {
+			log.Printf("selecting: candidate (%0.2fkm from current)", currentToCandidate/1000)
 		}
 		return candidate
 	}
 
 	// if we fail to find the next nearest location - just send the package directly to the destination
-	if i.debugLogging {
+	if idx.debugLogging {
 		log.Println("selecting: destination")
 	}
 	return destination
 }
 
-func (i *LocationIndex) Lookup(locationID int64) (*Location, error) {
-	if l, ok := i.ht[locationID]; ok {
+func (idx *LocationIndex) Lookup(locationID int64) (*Location, error) {
+	if l, ok := idx.ht[locationID]; ok {
 		return l, nil
 	}
 	return nil, errors.Errorf("location %d not found", locationID)
 }
 
+func randBetween(min int, max int) int {
+	return rand.Intn(max-min+1) + min
+}
+
 // Rand returns a random location in the index for which the filter returns true
 // filter can be nil which implies no filter
-func (i *LocationIndex) Rand(filter quadtree.FilterFunc) (*Location, error) {
-	ptr := i.qt.Matching(randGeoPoint(), filter)
-	if ptr == nil {
-		return nil, errors.New("calling Rand() on an empty LocationIndex or filter is too restrictive")
+func (idx *LocationIndex) Rand(filter quadtree.FilterFunc) *Location {
+	randPopulation := randBetween(idx.minPopulation, idx.maxPopulation)
+
+	i := sort.Search(len(idx.popSorted), func(i int) bool {
+		return idx.popSorted[i].Population >= randPopulation
+	})
+
+	attempts := 10
+	for attempt := 0; attempt < attempts; attempt++ {
+		candidate := idx.popSorted[i]
+		if filter == nil || filter(candidate) {
+			return candidate
+		}
+		i = (i + 1) % len(idx.popSorted)
 	}
-	return ptr.(*Location), nil
+
+	log.Fatalf("failed to find candidate in %d attempts", attempts)
+	return nil
 }

@@ -29,10 +29,10 @@ hours_at_rest:
 probability_express: 0.4
 
 # only care about shipping packages at least this far
-min_shipping_distance_km: 100
+min_shipping_distance_km: 1000
 
 # air freight is pricy - make sure a segment is far enough
-min_air_freight_distance_km: 1000
+min_air_freight_distance_km: 2000
 
 # average land speed
 avg_land_speed_kmph: 50

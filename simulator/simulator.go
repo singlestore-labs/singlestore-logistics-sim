@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/paulmach/orb"
-	"github.com/paulmach/orb/planar"
+	"github.com/paulmach/orb/geo"
 	uuid "github.com/satori/go.uuid"
 	"gonum.org/v1/gonum/stat/distuv"
 )
@@ -33,16 +33,15 @@ type State struct {
 	SimInterval time.Duration
 	Verbose     int
 
-	MaxPackages                      int
-	MaxDelivered                     int
-	PackagesPerTick                  *distuv.Normal
-	HoursAtRest                      *distuv.Normal
-	ProbabilityExpress               float64
-	MinShippingDistanceKM            float64
-	MinShippingDistanceMetresSquared float64
-	MinAirFreightDistanceKM          float64
-	AvgLandSpeedKMPH                 float64
-	AvgAirSpeedKMPH                  float64
+	MaxPackages             int
+	MaxDelivered            int
+	PackagesPerTick         *distuv.Normal
+	HoursAtRest             *distuv.Normal
+	ProbabilityExpress      float64
+	MinShippingDistanceKM   float64
+	MinAirFreightDistanceKM float64
+	AvgLandSpeedKMPH        float64
+	AvgAirSpeedKMPH         float64
 }
 
 func NewState(c *Config, locations *LocationIndex, producer Producer, initialTrackers []Tracker) *State {
@@ -58,16 +57,15 @@ func NewState(c *Config, locations *LocationIndex, producer Producer, initialTra
 		SimInterval: c.SimInterval,
 		Verbose:     c.Verbose,
 
-		MaxPackages:                      c.MaxPackages,
-		MaxDelivered:                     c.MaxDelivered,
-		PackagesPerTick:                  c.PackagesPerTick.ToDist(),
-		HoursAtRest:                      c.HoursAtRest.ToDist(),
-		ProbabilityExpress:               c.ProbabilityExpress,
-		MinShippingDistanceKM:            c.MinShippingDistanceKM,
-		MinShippingDistanceMetresSquared: c.MinShippingDistanceKM * 1000 * c.MinShippingDistanceKM * 1000,
-		MinAirFreightDistanceKM:          c.MinAirFreightDistanceKM,
-		AvgLandSpeedKMPH:                 c.AvgLandSpeedKMPH,
-		AvgAirSpeedKMPH:                  c.AvgAirSpeedKMPH,
+		MaxPackages:             c.MaxPackages,
+		MaxDelivered:            c.MaxDelivered,
+		PackagesPerTick:         c.PackagesPerTick.ToDist(),
+		HoursAtRest:             c.HoursAtRest.ToDist(),
+		ProbabilityExpress:      c.ProbabilityExpress,
+		MinShippingDistanceKM:   c.MinShippingDistanceKM,
+		MinAirFreightDistanceKM: c.MinAirFreightDistanceKM,
+		AvgLandSpeedKMPH:        c.AvgLandSpeedKMPH,
+		AvgAirSpeedKMPH:         c.AvgAirSpeedKMPH,
 	}
 }
 
@@ -165,25 +163,19 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 			method = enum.Express
 		}
 
-		origin, err := state.Locations.Rand(nil)
-		if err != nil {
-			log.Panic(err)
-		}
+		origin := state.Locations.Rand(nil)
 
-		destination, err := state.Locations.Rand(func(p orb.Pointer) bool {
+		destination := state.Locations.Rand(func(p orb.Pointer) bool {
 			candidate := p.(*Location)
 			if candidate == origin {
 				return false
 			}
 			// we only deliver packages which travel farther than MinShippingDistanceKM
-			return planar.DistanceSquared(origin.Position, candidate.Position) > state.MinShippingDistanceMetresSquared
+			return geo.Distance(origin.Position, candidate.Position)/1000 > state.MinShippingDistanceKM
 		})
-		if err != nil {
-			log.Panic(err)
-		}
 
 		// extremely crude delivery estimate calculation
-		distance := planar.Distance(origin.Position, destination.Position) / 1000
+		distance := geo.Distance(origin.Position, destination.Position) / 1000
 		avgSpeed := state.AvgLandSpeedKMPH
 		if method == enum.Express {
 			avgSpeed = state.AvgAirSpeedKMPH
@@ -202,7 +194,7 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 			Method:                method,
 		}
 
-		err = state.Topics.WritePackage(&pkg)
+		err := state.Topics.WritePackage(&pkg)
 		if err != nil {
 			log.Panicf("failed to write package to topic: %v", err)
 		}
@@ -225,8 +217,8 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 		if state.Verbose >= VerboseDebug {
 			log.Printf("CreatePackage(%s): %s -> %s (%s, %.1fkm)",
 				pkg.PackageID.String()[:8],
-				AvroPoint(origin.Position),
-				AvroPoint(destination.Position),
+				PointString(origin.Position),
+				PointString(destination.Position),
 				method, distance)
 		}
 
@@ -251,7 +243,7 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 
 	nextLocation := state.Locations.NextLocation(currentLocation, destinationLocation, t.Method)
 
-	distanceToNext := planar.Distance(currentLocation.Position, nextLocation.Position) / 1000
+	distanceToNext := geo.Distance(currentLocation.Position, nextLocation.Position) / 1000
 	speed := state.AvgLandSpeedKMPH
 	if distanceToNext > state.MinAirFreightDistanceKM {
 		speed = state.AvgAirSpeedKMPH
@@ -272,8 +264,8 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 	if state.Verbose >= VerboseDebug {
 		log.Printf("DepartureScan(%s): %s -> %s in %s (%.1fkm)",
 			t.PackageID.String()[:8],
-			AvroPoint(currentLocation.Position),
-			AvroPoint(nextLocation.Position),
+			PointString(currentLocation.Position),
+			PointString(nextLocation.Position),
 			t.NextTransitionTime.Sub(state.Clock.Now()),
 			distanceToNext)
 	}
@@ -306,7 +298,7 @@ func TriggerArrivalScan(state *State, t *Tracker) {
 
 		log.Printf("ArrivalScan(%s): %s; departure in %s",
 			t.PackageID.String()[:8],
-			AvroPoint(currentLocation.Position),
+			PointString(currentLocation.Position),
 			t.NextTransitionTime.Sub(now))
 	}
 
@@ -335,7 +327,7 @@ func TriggerDelivered(state *State, t *Tracker) {
 
 		log.Printf("Delivered(%s): %s",
 			t.PackageID.String()[:8],
-			AvroPoint(currentLocation.Position))
+			PointString(currentLocation.Position))
 	}
 
 	err := state.Topics.WriteTransition(state.Clock.Now(), enum.Delivered, t)

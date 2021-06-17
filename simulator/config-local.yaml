@@ -1,9 +1,9 @@
-verbose: 1
+verbose: 0
 id: local
 
-num_workers: 1
+num_workers: 8
 
-max_delivered: 100_000
+max_delivered: 1_000_000
 
 # sim_interval: 1s
 max_packages: 1_000_000

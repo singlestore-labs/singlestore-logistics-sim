@@ -52,6 +52,12 @@ func main() {
 		log.Fatalf("unable to load config files: %v; error: %+v", configPaths, err)
 	}
 
+	if cpuprofile != "" {
+		// disable logging and lower verbosity during profile
+		log.SetOutput(ioutil.Discard)
+		config.Verbose = 0
+	}
+
 	// set SimulatorID from env variable
 	if sid, ok := os.LookupEnv("SIMULATOR_ID"); ok {
 		config.SimulatorID = sid
@@ -141,11 +147,9 @@ func main() {
 
 	log.Printf("starting simulation at %s with %d workers", config.StartTime, numWorkers)
 
+	// start the cpu profile after we initialize everything so we measure the
+	// main simulation routines
 	if cpuprofile != "" {
-		// disable logging and lower verbosity during profile
-		log.SetOutput(ioutil.Discard)
-		config.Verbose = 0
-
 		f, err := os.Create(cpuprofile)
 		if err != nil {
 			log.Fatal("could not create CPU profile: ", err)
