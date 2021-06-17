@@ -28,7 +28,6 @@ services:
     entrypoint: /bin/bash -c
     command:
       - |
-        rpk --brokers rp-node-0:9092 topic create locations
         rpk --brokers rp-node-0:9092 topic create transitions
         rpk --brokers rp-node-0:9092 topic create packages
   singlestore:

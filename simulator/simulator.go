@@ -47,7 +47,7 @@ type State struct {
 
 func NewState(c *Config, locations *LocationIndex, producer Producer, initialTrackers []Tracker) *State {
 	return &State{
-		Clock:     NewClock(c.StartTime, c.TickDuration),
+		Clock:     NewClock(c.StartTime),
 		Trackers:  initialTrackers,
 		Locations: locations,
 		Topics:    NewTopics(producer),
@@ -74,8 +74,11 @@ func NewState(c *Config, locations *LocationIndex, producer Producer, initialTra
 func Simulate(state *State) {
 	totalDelivered := 0
 	for {
-		delta := state.Clock.Tick()
 		now := state.Clock.Now()
+
+		if state.Verbose >= VerboseInfo {
+			log.Printf("TICK: %s tracked(%d) delivered(%d/%d)", now, len(state.Trackers), totalDelivered, state.MaxDelivered)
+		}
 
 		if state.MaxPackages <= 0 || len(state.Trackers) < state.MaxPackages {
 			numNewPackages := state.PackagesPerTick.Rand()
@@ -97,14 +100,12 @@ func Simulate(state *State) {
 			// for performance we mutate the tracker in place
 			tracker := &state.Trackers[i]
 
-			switch tracker.State {
-			case enum.AtRest:
-				if now.Equal(tracker.NextTransitionTime) || now.After(tracker.NextTransitionTime) {
+			if now.Equal(tracker.NextTransitionTime) || now.After(tracker.NextTransitionTime) {
+				switch tracker.State {
+				case enum.AtRest:
 					TriggerDepartureScan(state, tracker)
-				}
 
-			case enum.InTransit:
-				if UpdatePosition(state, tracker, delta) {
+				case enum.InTransit:
 					// the package has reached it's current destination
 					if tracker.DestinationLocationID == tracker.NextLocationID {
 						// the package has reached it's final destination
@@ -114,27 +115,31 @@ func Simulate(state *State) {
 						// the package has reached a interim destination
 						TriggerArrivalScan(state, tracker)
 					}
+
+				default:
+					log.Panicf("unknown state %+v for package %s", tracker.State, tracker.PackageID)
 				}
-			default:
-				log.Panicf("unknown state %+v for package %s", tracker.State, tracker.PackageID)
 			}
 		}
 
-		// remove trackers for delivered packages
+		// remove trackers for delivered packages and determine the next transition time
+		nextTransitionTime := state.Trackers[0].NextTransitionTime
 		newTrackers := make([]Tracker, 0, len(state.Trackers)-numDelivered)
 		for i := range state.Trackers {
 			tracker := &state.Trackers[i]
+			if tracker.NextTransitionTime.Before(nextTransitionTime) {
+				nextTransitionTime = tracker.NextTransitionTime
+			}
 			if !tracker.Delivered {
 				newTrackers = append(newTrackers, *tracker)
 			}
 		}
 		state.Trackers = newTrackers
 
-		totalDelivered += numDelivered
+		// advance the clock
+		state.Clock.Set(nextTransitionTime)
 
-		if state.Verbose >= VerboseInfo {
-			log.Printf("TICK: tracked(%d) delivered(%d/%d)", len(state.Trackers), totalDelivered, state.MaxDelivered)
-		}
+		totalDelivered += numDelivered
 
 		if state.MaxDelivered > 0 && totalDelivered >= state.MaxDelivered {
 			return
@@ -218,7 +223,7 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 		})
 
 		if state.Verbose >= VerboseDebug {
-			log.Printf("CreatePackage(%s): origin(%s) destination(%s) method(%s) distance(%f)",
+			log.Printf("CreatePackage(%s): %s -> %s (%s, %.1fkm)",
 				pkg.PackageID.String()[:8],
 				AvroPoint(origin.Position),
 				AvroPoint(destination.Position),
@@ -228,54 +233,6 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 		TriggerArrivalScan(state, &state.Trackers[len(state.Trackers)-1])
 	}
 
-}
-
-// UpdatePosition computes a new position for the tracker based on it's current
-// position, speed, next location, and the time that has passed.
-// Returns: true if we reached the next location, false otherwise
-func UpdatePosition(state *State, t *Tracker, delta time.Duration) bool {
-	if t.State != enum.InTransit {
-		log.Panicf("UpdatePosition can only be called when State == InTransit")
-	}
-
-	distanceRemaining := planar.Distance(t.Position, t.NextLocationPosition)
-
-	// calculate the maximum distance this package could have gone in the time
-	// that has passed based on this package's current speed
-	maxDistance := float64(t.SpeedKMPH*1000) * delta.Hours()
-
-	reachedDestination := false
-
-	if maxDistance >= distanceRemaining {
-		// we reached our destination!
-		t.Position = t.NextLocationPosition
-		reachedDestination = true
-	} else {
-		percent := maxDistance / distanceRemaining
-		t.Position = orb.Point{
-			t.Position[0] + percent*(t.NextLocationPosition[0]-t.Position[0]),
-			t.Position[1] + percent*(t.NextLocationPosition[1]-t.Position[1]),
-		}
-	}
-
-	if state.Verbose >= VerboseSilly {
-		log.Printf("UpdatePosition(%s): loc(%s) target(%s) travelled(%gkm) remaining(%gkm)",
-			t.PackageID.String()[:8],
-			AvroPoint(t.Position),
-			AvroPoint(t.NextLocationPosition),
-			math.Min(maxDistance/1000, distanceRemaining/1000),
-			distanceRemaining/1000,
-		)
-	}
-
-	/*
-		err := state.Topics.WriteLocation(state.Clock.Now(), t)
-		if err != nil {
-			log.Panicf("failed to write location to topic: %v", err)
-		}
-	*/
-
-	return reachedDestination
 }
 
 func TriggerDepartureScan(state *State, t *Tracker) {
@@ -300,23 +257,24 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 		speed = state.AvgAirSpeedKMPH
 	}
 
+	duration := time.Hour * time.Duration(distanceToNext/speed)
+	nextTransitionTime := state.Clock.Now().Add(duration)
+
 	// update tracker state fields
 	t.State = enum.InTransit
 	t.Seq = t.Seq + 1
 	t.LastLocationID = currentLocation.LocationID
 
 	// update tracker InTransit fields
-	t.SpeedKMPH = int(speed)
-	t.Position = currentLocation.Position
+	t.NextTransitionTime = nextTransitionTime
 	t.NextLocationID = nextLocation.LocationID
-	t.NextLocationPosition = nextLocation.Position
 
 	if state.Verbose >= VerboseDebug {
-		log.Printf("DepartureScan(%s): loc(%s) speed(%d) target(%s) dist(%f)",
+		log.Printf("DepartureScan(%s): %s -> %s in %s (%.1fkm)",
 			t.PackageID.String()[:8],
 			AvroPoint(currentLocation.Position),
-			t.SpeedKMPH,
 			AvroPoint(nextLocation.Position),
+			t.NextTransitionTime.Sub(state.Clock.Now()),
 			distanceToNext)
 	}
 
@@ -346,7 +304,7 @@ func TriggerArrivalScan(state *State, t *Tracker) {
 			log.Panic(err)
 		}
 
-		log.Printf("ArrivalScan(%s): loc(%s) nextTransition(%s)",
+		log.Printf("ArrivalScan(%s): %s; departure in %s",
 			t.PackageID.String()[:8],
 			AvroPoint(currentLocation.Position),
 			t.NextTransitionTime.Sub(now))
@@ -375,7 +333,7 @@ func TriggerDelivered(state *State, t *Tracker) {
 			log.Panic(err)
 		}
 
-		log.Printf("Delivered(%s): loc(%s)",
+		log.Printf("Delivered(%s): %s",
 			t.PackageID.String()[:8],
 			AvroPoint(currentLocation.Position))
 	}

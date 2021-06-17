@@ -16,6 +16,12 @@ setup_disks() {
 
     mkdir -p ${mountdest}
     mount ${device} ${mountdest}
+
+    local mem_kb=$(cat /proc/meminfo | grep MemTotal | awk '{ print int($2 * 0.15) }')
+    fallocate -l ${mem_kb}KiB ${mountdest}/swapfile
+    chmod 600 ${mountdest}/swapfile
+    mkswap ${mountdest}/swapfile
+    swapon ${mountdest}/swapfile
 }
 
 run_or_die setup_disks

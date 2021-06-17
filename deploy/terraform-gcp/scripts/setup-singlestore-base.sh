@@ -12,12 +12,6 @@ EOF
     echo 0 >/sys/kernel/mm/transparent_hugepage/khugepaged/defrag
 
     if [[ -d /data ]]; then
-        local mem_kb=$(cat /proc/meminfo | grep MemTotal | awk '{ print int($2 * 0.15) }')
-        fallocate -l ${mem_kb}KiB /data/swapfile
-        chmod 600 /data/swapfile
-        mkswap /data/swapfile
-        swapon /data/swapfile
-
         mkdir -p /data/memsql /var/lib/memsql
         mount --bind /data/memsql /var/lib/memsql
     fi

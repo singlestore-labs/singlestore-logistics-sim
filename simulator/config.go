@@ -50,8 +50,7 @@ type Config struct {
 	// set to 0 to cause the simulator to run as fast as possible
 	SimInterval time.Duration `yaml:"sim_interval"`
 
-	StartTime    time.Time     `yaml:"start_time"`
-	TickDuration time.Duration `yaml:"tick_duration"`
+	StartTime time.Time `yaml:"start_time"`
 
 	MaxPackages  int `yaml:"max_packages"`
 	MaxDelivered int `yaml:"max_delivered"`
@@ -82,10 +81,7 @@ type Config struct {
 }
 
 func ParseConfigs(filenames []string) (*Config, error) {
-	// initialize with default values
-	cfg := Config{
-		TickDuration: time.Hour,
-	}
+	cfg := Config{}
 
 	for _, filename := range filenames {
 		f, err := os.Open(filename)

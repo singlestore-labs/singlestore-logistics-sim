@@ -5,9 +5,6 @@ setup_simulator() {
 
     mkdir -p /etc/simulator
     cat >/etc/simulator/config.yaml <<EOF
-# amount of time to simulate each tick
-tick_duration: 1h
-
 # maximum number of packages to simulate at any point (0 = unlimited)
 max_packages: 200000
 

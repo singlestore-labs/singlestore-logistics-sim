@@ -42,18 +42,6 @@ var (
 			]
 		}
 	`)
-
-	locationSchema = avro.MustParse(`
-		{
-			"type": "record",
-			"name": "Track",
-			"fields": [
-				{ "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
-				{ "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
-				{ "name": "Position", "type": "string" }
-			]
-		}
-	`)
 )
 
 type Topics struct {
@@ -61,7 +49,6 @@ type Topics struct {
 
 	packageEncoder    *avro.Encoder
 	transitionEncoder *avro.Encoder
-	locationEncoder   *avro.Encoder
 }
 
 func NewTopics(producer Producer) *Topics {
@@ -70,7 +57,6 @@ func NewTopics(producer Producer) *Topics {
 
 		packageEncoder:    avro.NewEncoderForSchema(packageSchema, producer.TopicWriter("packages")),
 		transitionEncoder: avro.NewEncoderForSchema(transitionSchema, producer.TopicWriter("transitions")),
-		locationEncoder:   avro.NewEncoderForSchema(locationSchema, producer.TopicWriter("locations")),
 	}
 }
 
@@ -86,12 +72,5 @@ func (r *Topics) WriteTransition(now time.Time, transition enum.TransitionKind, 
 		NextLocationID: t.NextLocationID,
 		Recorded:       now,
 		Kind:           transition,
-	})
-}
-func (r *Topics) WriteLocation(now time.Time, t *Tracker) error {
-	return r.locationEncoder.Encode(&LocationRecord{
-		PackageID: t.PackageID,
-		Recorded:  now,
-		Position:  AvroPoint(t.Position),
 	})
 }

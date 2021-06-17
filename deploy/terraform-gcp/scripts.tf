@@ -4,6 +4,7 @@ locals {
     file("${path.module}/scripts/setup-disks.sh"),
     file("${path.module}/scripts/setup-apt.sh"),
     file("${path.module}/scripts/setup-node-exporter.sh"),
+    file("${path.module}/scripts/tune-machine.sh"),
   ]
 }
 

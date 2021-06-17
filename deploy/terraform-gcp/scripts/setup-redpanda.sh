@@ -2,14 +2,17 @@ setup_redpanda() {
     local node_index=$(hostname | sed 's/^.*-\([0-9]\+\)$/\1/')
     local partitions_per_topic="$(metadata partitions-per-topic)"
 
-    mkdir -p /data/redpanda /var/lib/redpanda
-    mount --bind /data/redpanda /var/lib/redpanda
+    # probably installed via tune-machine.sh
+    if ! dpkg -s redpanda; then
+        mkdir -p /data/redpanda /var/lib/redpanda
+        mount --bind /data/redpanda /var/lib/redpanda
 
-    curl -1sLf 'https://packages.vectorized.io/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash
-    apt install -y redpanda
+        curl -1sLf 'https://packages.vectorized.io/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash
+        apt install -y redpanda
 
-    rpk redpanda mode production
-    rpk redpanda tune all
+        rpk redpanda mode production
+        rpk redpanda tune all
+    fi
 
     rpk config set cluster_id redpanda
     rpk config set organization singlestore

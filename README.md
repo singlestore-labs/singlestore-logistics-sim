@@ -21,7 +21,6 @@ The [simulator](simulator) is a go program which generates package histories and
 There are three topics:
  - packages
  - transitions
- - tracking
 
 ## packages topic
 
@@ -73,24 +72,6 @@ The transitions topic is written to whenever a package changes states. A normal 
         { "name": "Kind", "type": { "name": "Kind", "type": "enum", "symbols": [
             "arrival_scan", "departure_scan", "delivered"
         ] } }
-    ]
-}
-```
-
-## tracking topic
-
-The tracking topic is written to as packages move in real time.
-
-**Avro schema**:
-
-```json
-{
-    "type": "record",
-    "name": "Track",
-    "fields": [
-        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
-        { "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
-        { "name": "Position", "type": "string" }
     ]
 }
 ```

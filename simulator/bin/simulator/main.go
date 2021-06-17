@@ -78,22 +78,6 @@ func main() {
 
 	log.Printf("Simulator ID: %s", config.SimulatorID)
 
-	if cpuprofile != "" {
-		// disable logging and lower verbosity during profile
-		log.SetOutput(ioutil.Discard)
-		config.Verbose = 0
-
-		f, err := os.Create(cpuprofile)
-		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		}
-		defer f.Close()
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-		defer pprof.StopCPUProfile()
-	}
-
 	go simulator.ExportMetrics(config.Metrics)
 
 	var db simulator.Database
@@ -120,7 +104,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to download locations from SingleStore: %+v", err)
 	}
-	index, err := simulator.NewLocationIndexFromDB(locations)
+	index, err := simulator.NewLocationIndexFromDB(locations, config.Verbose >= simulator.VerboseSilly)
 	if err != nil {
 		log.Fatalf("unable to build location index: %+v", err)
 	}
@@ -156,6 +140,22 @@ func main() {
 	}
 
 	log.Printf("starting simulation at %s with %d workers", config.StartTime, numWorkers)
+
+	if cpuprofile != "" {
+		// disable logging and lower verbosity during profile
+		log.SetOutput(ioutil.Discard)
+		config.Verbose = 0
+
+		f, err := os.Create(cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 
 	initTrackersPerWorker := len(trackers) / numWorkers
 	var initTrackers []simulator.Tracker

@@ -426,7 +426,7 @@
                     "group": [],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "SELECT\n  $__timeGroup(start_time, '$__interval', 0) as time,\n  pipeline_name,\n  SUM(mb_per_sec)\nFROM information_schema.pipelines_batches_summary\nWHERE\n  $__timeFilter(start_time)\nGROUP BY 1, 2\nORDER BY 1, 2",
+                    "rawSql": "SELECT\n  $__timeGroup(start_time, '$__interval', previous) as time,\n  pipeline_name,\n  SUM(mb_per_sec)\nFROM information_schema.pipelines_batches_summary\nWHERE\n  $__timeFilter(start_time)\nGROUP BY 1, 2\nORDER BY 1, 2",
                     "refId": "A",
                     "select": [
                         [
