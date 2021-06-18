@@ -1,15 +1,15 @@
 verbose: 0
-id: local2
+id: local
 
 num_workers: 4
 
-max_delivered: 1_000_000
+max_delivered: 1_000
 
 # sim_interval: 1s
-max_packages: 100_000
+max_packages: 1_000
 
 packages_per_tick:
-  avg: 100_000
+  avg: 10_000
   stddev: 3_000
 
 database:
@@ -20,5 +20,7 @@ database:
   database: logistics
 
 topics:
+  compression: false
+  batch_max_bytes: 65535   # 64 * 1024
   brokers:
     - 127.0.0.1:9093

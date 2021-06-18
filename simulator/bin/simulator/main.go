@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -162,12 +163,13 @@ func main() {
 	}
 
 	initTrackersPerWorker := len(trackers) / numWorkers
-	var initTrackers []simulator.Tracker
+	var initTrackers simulator.Trackers
 
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 
 		initTrackers, trackers = trackers[:initTrackersPerWorker], trackers[initTrackersPerWorker:]
+		heap.Init(&initTrackers)
 
 		var producer simulator.Producer
 		for {

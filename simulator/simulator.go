@@ -22,7 +22,7 @@ const (
 
 type State struct {
 	Clock     *Clock
-	Trackers  []Tracker
+	Trackers  Trackers
 	Locations *LocationIndex
 	Topics    *Topics
 
@@ -44,10 +44,10 @@ type State struct {
 	AvgAirSpeedKMPH         float64
 }
 
-func NewState(c *Config, locations *LocationIndex, producer Producer, initialTrackers []Tracker) *State {
+func NewState(c *Config, locations *LocationIndex, producer Producer, trackers Trackers) *State {
 	return &State{
 		Clock:     NewClock(c.StartTime),
-		Trackers:  initialTrackers,
+		Trackers:  trackers,
 		Locations: locations,
 		Topics:    NewTopics(producer),
 
@@ -75,73 +75,55 @@ func Simulate(state *State) {
 		now := state.Clock.Now()
 
 		if state.Verbose >= VerboseInfo {
-			log.Printf("TICK: %s tracked(%d) delivered(%d/%d)", now, len(state.Trackers), totalDelivered, state.MaxDelivered)
+			log.Printf("TICK: %s tracked(%d) delivered(%d/%d)", now, state.Trackers.Len(), totalDelivered, state.MaxDelivered)
 		}
 
-		if state.MaxPackages <= 0 || len(state.Trackers) < state.MaxPackages {
+		if state.MaxPackages <= 0 || state.Trackers.Len() < state.MaxPackages {
 			numNewPackages := state.PackagesPerTick.Rand()
 			if state.MaxPackages > 0 {
 				numNewPackages = math.Min(
-					float64(state.MaxPackages-len(state.Trackers)),
+					float64(state.MaxPackages-state.Trackers.Len()),
 					numNewPackages,
 				)
 			}
 			CreatePackages(state, now, int(numNewPackages))
 		}
 
-		// keep track of the number of delivered packages; the corresponding
-		// trackers will need to be removed before our next Tick
-		numDelivered := 0
+		// process up to an hour of transitions
+		processEnd := now.Add(time.Hour)
 
-		// transition packages
-		for i := range state.Trackers {
-			// for performance we mutate the tracker in place
-			tracker := &state.Trackers[i]
+		for state.Trackers.Len() > 0 && state.Trackers.EarliestTransitionTime().Before(processEnd) {
+			tracker := state.Trackers.PopTracker()
 
-			if now.Equal(tracker.NextTransitionTime) || now.After(tracker.NextTransitionTime) {
-				switch tracker.State {
-				case enum.AtRest:
-					TriggerDepartureScan(state, tracker)
+			switch tracker.State {
+			case enum.AtRest:
+				TriggerDepartureScan(state, tracker)
+				state.Trackers.PushTracker(tracker)
 
-				case enum.InTransit:
-					// the package has reached it's current destination
-					if tracker.DestinationLocationID == tracker.NextLocationID {
-						// the package has reached it's final destination
-						TriggerDelivered(state, tracker)
-						numDelivered++
-					} else {
-						// the package has reached a interim destination
-						TriggerArrivalScan(state, tracker)
-					}
-
-				default:
-					log.Panicf("unknown state %+v for package %s", tracker.State, tracker.PackageID)
+			case enum.InTransit:
+				// the package has reached it's current destination
+				if tracker.DestinationLocationID == tracker.NextLocationID {
+					// the package has reached it's final destination
+					// don't put it back in state.Trackers
+					TriggerDelivered(state, tracker)
+					totalDelivered++
+				} else {
+					// the package has reached a interim destination
+					TriggerArrivalScan(state, tracker)
+					state.Trackers.PushTracker(tracker)
 				}
+
+			default:
+				log.Panicf("unknown state %+v for package %s", tracker.State, tracker.PackageID)
 			}
 		}
 
-		if len(state.Trackers) > 0 {
-			// remove trackers for delivered packages and determine the next transition time
-			nextTransitionTime := state.Trackers[0].NextTransitionTime
-			newTrackers := make([]Tracker, 0, len(state.Trackers)-numDelivered)
-			for i := range state.Trackers {
-				tracker := &state.Trackers[i]
-				if tracker.NextTransitionTime.Before(nextTransitionTime) {
-					nextTransitionTime = tracker.NextTransitionTime
-				}
-				if !tracker.Delivered {
-					newTrackers = append(newTrackers, *tracker)
-				}
-			}
-			state.Trackers = newTrackers
-
-			// advance the clock
-			state.Clock.Set(nextTransitionTime)
+		// advance the clock
+		if state.Trackers.Len() > 0 {
+			state.Clock.Set(state.Trackers.EarliestTransitionTime())
 		} else {
 			state.Clock.Tick(time.Hour)
 		}
-
-		totalDelivered += numDelivered
 
 		if state.MaxDelivered > 0 && totalDelivered >= state.MaxDelivered {
 			return
@@ -205,7 +187,7 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 
 		nextTransitionTime := now.Add(time.Hour * time.Duration(state.HoursAtRest.Rand()))
 
-		state.Trackers = append(state.Trackers, Tracker{
+		t := &Tracker{
 			PackageID:             pkg.PackageID,
 			Method:                pkg.Method,
 			DestinationLocationID: pkg.DestinationLocationID,
@@ -216,7 +198,7 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 			NextLocationID: pkg.OriginLocationID,
 
 			NextTransitionTime: nextTransitionTime,
-		})
+		}
 
 		if state.Verbose >= VerboseDebug {
 			log.Printf("CreatePackage(%s): %s -> %s (%s, %.1fkm)",
@@ -226,7 +208,8 @@ func CreatePackages(state *State, now time.Time, numNewPackages int) {
 				method, distance)
 		}
 
-		TriggerArrivalScan(state, &state.Trackers[len(state.Trackers)-1])
+		TriggerArrivalScan(state, t)
+		state.Trackers.PushTracker(t)
 	}
 
 }
@@ -252,12 +235,10 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 	duration := time.Hour * time.Duration(distanceToNext/speed)
 	nextTransitionTime := state.Clock.Now().Add(duration)
 
-	// update tracker state fields
 	t.State = enum.InTransit
 	t.Seq = t.Seq + 1
 	t.LastLocationID = currentLocation.LocationID
 
-	// update tracker InTransit fields
 	t.NextTransitionTime = nextTransitionTime
 	t.NextLocationID = nextLocation.LocationID
 
@@ -277,12 +258,10 @@ func TriggerDepartureScan(state *State, t *Tracker) {
 }
 
 func TriggerArrivalScan(state *State, t *Tracker) {
-	// update tracker state fields
 	t.State = enum.AtRest
 	t.Seq = t.Seq + 1
 	t.LastLocationID = t.NextLocationID
 
-	// update tracker AtRest fields
 	now := state.Clock.Now()
 	t.NextTransitionTime = now.Add(time.Hour * time.Duration(state.HoursAtRest.Rand()))
 
@@ -305,7 +284,6 @@ func TriggerArrivalScan(state *State, t *Tracker) {
 }
 
 func TriggerDelivered(state *State, t *Tracker) {
-	// update tracker state fields
 	t.Delivered = true
 	t.State = enum.AtRest
 	t.Seq = t.Seq + 1

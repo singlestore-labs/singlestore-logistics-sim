@@ -10,7 +10,7 @@ max_packages: 1_000_000
 
 # number of packages to generate per tick
 packages_per_tick:
-  avg: 50000
+  avg: 100000
   stddev: 30000
 
 # how long packages should take to be processed

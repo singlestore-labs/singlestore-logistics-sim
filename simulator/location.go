@@ -54,7 +54,7 @@ type LocationQueue []*LocationQueueItem
 var _ heap.Interface = &LocationQueue{}
 
 func NewLocationQueue() LocationQueue {
-	return LocationQueue(make(LocationQueue, 0))
+	return make(LocationQueue, 0)
 }
 
 func (l LocationQueue) Len() int { return len(l) }
