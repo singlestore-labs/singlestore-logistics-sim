@@ -13,15 +13,23 @@ services:
       - --default-log-level=info
       - --node-id=0
       - --kafka-addr
-      - PLAINTEXT://0.0.0.0:29092,DOCKER://rp-node-0:9092,OUTSIDE://rp-node-0:9093
+      - PLAINTEXT://0.0.0.0:29092,DOCKER://redpanda:9092,OUTSIDE://redpanda:9093
       - --advertise-kafka-addr
-      - PLAINTEXT://rp-node-0:29092,DOCKER://rp-node-0:9092,OUTSIDE://127.0.0.1:9093
+      - PLAINTEXT://redpanda:29092,DOCKER://redpanda:9092,OUTSIDE://127.0.0.1:9093
     ports:
       - 9092:9092
       - 9093:9093
       - 29092:29092
     volumes:
       - /var/lib/redpanda/data
+  redpanda-setup:
+    container_name: rp-setup
+    image: vectorized/redpanda:v21.6.1
+    entrypoint: /bin/bash -c
+    command:
+      - |
+        rpk --brokers rp-node-0:9092 topic create transitions
+        rpk --brokers rp-node-0:9092 topic create packages
   singlestore:
     image: singlestore/cluster-in-a-box:centos-7.3.11-f7c82b8166-3.2.9-1.11.5
     container_name: s2-agg-0
@@ -40,9 +48,10 @@ services:
       - START_AFTER_INIT=Y
   simulator:
     build: simulator
+    image: singlestore-logistics-simulator
     container_name: simulator
-    ports:
-      - 9000:9000
+    environment:
+      - SIMULATOR_ID=local
   prometheus:
     image: prom/prometheus:v2.27.1
     container_name: prometheus

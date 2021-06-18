@@ -7,13 +7,6 @@ import (
 	"github.com/hamba/avro"
 )
 
-type Topics interface {
-	WritePackage(p *Package) error
-	WriteTransition(now time.Time, transition enum.TransitionKind, t *Tracker) error
-	WriteLocation(now time.Time, t *Tracker) error
-	Close() error
-}
-
 var (
 	packageSchema = avro.MustParse(`
 		{
@@ -21,6 +14,7 @@ var (
 			"name": "Package",
 			"fields": [
 				{ "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+				{ "name": "SimulatorID", "type": "string" },
 				{ "name": "Received", "type": { "type": "long", "logicalType": "timestamp-millis" } },
 				{ "name": "DeliveryEstimate", "type": { "type": "long", "logicalType": "timestamp-millis" } },
 				{ "name": "OriginLocationID", "type": "long" },
@@ -48,54 +42,29 @@ var (
 			]
 		}
 	`)
-
-	locationSchema = avro.MustParse(`
-		{
-			"type": "record",
-			"name": "Track",
-			"fields": [
-				{ "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
-				{ "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
-				{ "name": "Position", "type": "string" }
-			]
-		}
-	`)
 )
 
-type Redpanda struct {
-	producer *SaramaProducer
+type Topics struct {
+	producer Producer
 
 	packageEncoder    *avro.Encoder
 	transitionEncoder *avro.Encoder
-	locationEncoder   *avro.Encoder
 }
 
-var _ Topics = &Redpanda{}
-
-func NewRedpanda(config TopicsConfig) (*Redpanda, error) {
-	producer, err := NewSaramaProducer(config.Brokers)
-	if err != nil {
-		return nil, err
-	}
-
-	packageEncoder := avro.NewEncoderForSchema(packageSchema, producer.TopicWriter("packages"))
-	transitionEncoder := avro.NewEncoderForSchema(transitionSchema, producer.TopicWriter("transitions"))
-	locationEncoder := avro.NewEncoderForSchema(locationSchema, producer.TopicWriter("locations"))
-
-	return &Redpanda{
+func NewTopics(producer Producer) *Topics {
+	return &Topics{
 		producer: producer,
 
-		packageEncoder:    packageEncoder,
-		transitionEncoder: transitionEncoder,
-		locationEncoder:   locationEncoder,
-	}, nil
+		packageEncoder:    avro.NewEncoderForSchema(packageSchema, producer.TopicWriter("packages")),
+		transitionEncoder: avro.NewEncoderForSchema(transitionSchema, producer.TopicWriter("transitions")),
+	}
 }
 
-func (r *Redpanda) WritePackage(p *Package) error {
+func (r *Topics) WritePackage(p *Package) error {
 	return r.packageEncoder.Encode(p)
 }
 
-func (r *Redpanda) WriteTransition(now time.Time, transition enum.TransitionKind, t *Tracker) error {
+func (r *Topics) WriteTransition(now time.Time, transition enum.TransitionKind, t *Tracker) error {
 	return r.transitionEncoder.Encode(&Transition{
 		PackageID:      t.PackageID,
 		Seq:            t.Seq,
@@ -104,15 +73,4 @@ func (r *Redpanda) WriteTransition(now time.Time, transition enum.TransitionKind
 		Recorded:       now,
 		Kind:           transition,
 	})
-}
-func (r *Redpanda) WriteLocation(now time.Time, t *Tracker) error {
-	return r.locationEncoder.Encode(&LocationRecord{
-		PackageID: t.PackageID,
-		Recorded:  now,
-		Position:  AvroPoint(t.Position),
-	})
-}
-
-func (r *Redpanda) Close() error {
-	return r.producer.Close()
 }

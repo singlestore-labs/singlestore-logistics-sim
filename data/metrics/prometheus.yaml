@@ -9,7 +9,7 @@ scrape_configs:
   - job_name: 'singlestore-db'
     metrics_path: /cluster-metrics
     static_configs:
-      - targets: ['singlestore:9104']
+      - targets: ['s2-agg-0:9104']
   - job_name: 'redpanda'
     static_configs:
-      - targets: ['redpanda:9644']
+      - targets: ['rp-node-0:9644']

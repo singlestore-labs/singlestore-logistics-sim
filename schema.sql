@@ -3,9 +3,12 @@ USE logistics;
 
 -- the packages table stores one row per package
 CREATE TABLE packages (
-    -- packageid is a UUID stored in its canonical text representation
-    -- (32 hexadecimal characters and 4 hyphens)
+    -- packageid is a unique identifier for this package
+    -- format: UUID stored in its canonical text representation (32 hexadecimal characters and 4 hyphens)
     packageid CHAR(36) NOT NULL,
+
+    -- simulatorid is a unique identifier for the simulator process which manages this package
+    simulatorid TEXT NOT NULL,
 
     -- marks when the package was received
     received DATETIME NOT NULL,
@@ -24,6 +27,9 @@ CREATE TABLE packages (
     -- standard packages are delivered using the slowest method at each point
     -- express packages are delivered using the fastest method at each point
     method ENUM ('standard', 'express') NOT NULL,
+
+    -- marks when the row was created
+    created DATETIME NOT NULL DEFAULT NOW(),
 
     KEY (received) USING CLUSTERED COLUMNSTORE,
     SHARD (packageid),
@@ -79,6 +85,9 @@ CREATE TABLE package_transitions (
     -- when did this transition happen
     recorded DATETIME NOT NULL,
 
+    -- marks when the row was created
+    created DATETIME NOT NULL DEFAULT NOW(),
+
     kind ENUM (
         -- arrival scan means the package was received
         'arrival_scan',
@@ -110,23 +119,13 @@ CREATE TABLE package_states (
     INDEX (kind)
 );
 
--- this table holds the realtime location of each active package
--- rows are deleted from this table once the corresponding package is delivered
-CREATE TABLE package_locations (
-    packageid CHAR(36) NOT NULL,
-    lonlat GEOGRAPHYPOINT NOT NULL,
-    recorded DATETIME NOT NULL,
-
-    PRIMARY KEY (packageid),
-    INDEX (lonlat)
-);
-
 CREATE PIPELINE packages
 AS LOAD DATA KAFKA 'rp-node-0/packages'
 SKIP DUPLICATE KEY ERRORS
 INTO TABLE packages
 FORMAT AVRO (
     packageid <- PackageID,
+    simulatorid <- SimulatorID,
     @received <- Received,
     @delivery_estimate <- DeliveryEstimate,
     origin_locationid <- OriginLocationID,
@@ -138,6 +137,7 @@ SCHEMA '{
     "name": "Package",
     "fields": [
         { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
+        { "name": "SimulatorID", "type": "string" },
         { "name": "Received", "type": { "type": "long", "logicalType": "timestamp-millis" } },
         { "name": "DeliveryEstimate", "type": { "type": "long", "logicalType": "timestamp-millis" } },
         { "name": "OriginLocationID", "type": "long" },
@@ -178,8 +178,11 @@ BEGIN
         recorded = IF(VALUES(seq) > package_states.seq, VALUES(recorded), package_states.recorded),
         kind = IF(VALUES(seq) > package_states.seq, VALUES(kind), package_states.kind);
 
-    DELETE FROM package_states
-    WHERE packageid IN (SELECT packageid FROM batch WHERE kind = "delivered");
+    DELETE package_states
+    FROM package_states JOIN batch
+    WHERE
+        package_states.packageid = batch.packageid
+        AND batch.kind = "delivered";
 
 END //
 
@@ -214,46 +217,3 @@ SET
     recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND);
 
 START PIPELINE transitions;
-
-DELIMITER //
-
-CREATE OR REPLACE PROCEDURE process_locations(batch QUERY(
-    packageid CHAR(36) NOT NULL,
-    lonlat GEOGRAPHYPOINT NOT NULL,
-    recorded DATETIME NOT NULL
-))
-AS
-BEGIN
-    INSERT INTO package_locations (packageid, lonlat, recorded)
-    SELECT * FROM batch
-    WHERE packageid IN (SELECT packageid FROM package_states)
-    ON DUPLICATE KEY UPDATE
-        lonlat = IF(VALUES(recorded) > package_locations.recorded, VALUES(lonlat), package_locations.lonlat),
-        recorded = IF(VALUES(recorded) > package_locations.recorded, VALUES(recorded), package_locations.recorded);
-
-    DELETE FROM package_locations
-    WHERE packageid NOT IN (SELECT packageid FROM package_states);
-END //
-
-DELIMITER ;
-
-CREATE PIPELINE locations
-AS LOAD DATA KAFKA 'rp-node-0/locations'
-INTO PROCEDURE process_locations
-FORMAT AVRO (
-    packageid <- PackageID,
-    lonlat <- Position,
-    @recorded <- Recorded
-)
-SCHEMA '{
-    "type": "record",
-    "name": "Track",
-    "fields": [
-        { "name": "PackageID", "type": { "type": "string", "logicalType": "uuid" } },
-        { "name": "Recorded", "type": { "type": "long", "logicalType": "timestamp-millis" } },
-        { "name": "Position", "type": "string" }
-    ]
-}'
-SET recorded = DATE_ADD(FROM_UNIXTIME(0), INTERVAL (@recorded / 1000) SECOND);
-
-START PIPELINE locations;

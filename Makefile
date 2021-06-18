@@ -1,7 +1,5 @@
 .PHONY: all
-all:
-	docker-compose rm -fsv
-	docker-compose up -d
+all: down monitoring storage simulator
 
 .PHONY: logs
 logs:
@@ -15,7 +13,10 @@ monitoring:
 .PHONY: storage
 storage:
 	docker-compose rm -fsv singlestore redpanda
-	docker-compose up -d singlestore redpanda
+	docker-compose up -d redpanda
+	sleep 2
+	docker-compose up -d redpanda-setup
+	docker-compose up -d singlestore
 
 .PHONY: simulator
 simulator:

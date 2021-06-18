@@ -25,6 +25,7 @@ const (
 type LocationKind string
 
 const (
+	Any   LocationKind = "any"
 	Hub   LocationKind = "hub"
 	Point LocationKind = "point"
 )

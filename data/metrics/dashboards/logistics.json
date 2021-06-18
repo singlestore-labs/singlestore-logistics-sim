@@ -186,7 +186,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select latest_offset - successful_cursor_offset as transitions from information_schema.pipelines_cursors where pipeline_name = 'transitions'",
+          "rawSql": "select sum(latest_offset - successful_cursor_offset) as transitions from information_schema.pipelines_cursors where pipeline_name = 'transitions'",
           "refId": "A",
           "select": [
             [
@@ -215,37 +215,8 @@
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select latest_offset - successful_cursor_offset as packages from information_schema.pipelines_cursors where pipeline_name = 'packages'",
+          "rawSql": "select sum(latest_offset - successful_cursor_offset) as packages from information_schema.pipelines_cursors where pipeline_name = 'packages'",
           "refId": "B",
-          "select": [
-            [
-              {
-                "params": [
-                  "origin_locationid"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "table": "package_states",
-          "timeColumn": "received",
-          "timeColumnType": "timestamp",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
-        },
-        {
-          "format": "table",
-          "group": [],
-          "hide": false,
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "select latest_offset - successful_cursor_offset as locations from information_schema.pipelines_cursors where pipeline_name = 'locations'",
-          "refId": "C",
           "select": [
             [
               {
@@ -800,8 +771,8 @@
     "list": []
   },
   "time": {
-    "from": "2021-11-15T04:23:56.000Z",
-    "to": "2022-01-25T15:23:56.000Z"
+    "from": "2021-06-15T06:54:36.000Z",
+    "to": "2021-06-24T06:54:36.000Z"
   },
   "timepicker": {},
   "timezone": "",

@@ -15,7 +15,7 @@ import (
 type Database interface {
 	CurrentTime() (time.Time, error)
 	Locations() ([]DBLocation, error)
-	ActivePackages() ([]DBActivePackage, error)
+	ActivePackages(string) ([]DBActivePackage, error)
 	Close() error
 }
 
@@ -24,6 +24,7 @@ type DBLocation struct {
 	Kind       enum.LocationKind
 	Longitude  float64
 	Latitude   float64
+	Population int
 }
 
 type DBActivePackage struct {
@@ -31,15 +32,12 @@ type DBActivePackage struct {
 	Method                enum.DeliveryMethod
 	DestinationLocationID int64
 
-	// current package position
-	Longitude float64
-	Latitude  float64
-
 	// the following fields correspond to the most recent transition for this package
 	TransitionKind           enum.TransitionKind
 	TransitionSeq            int
 	TransitionLocationID     int64
 	TransitionNextLocationID int64
+	TransitionRecorded       time.Time
 }
 
 type SingleStore struct {
@@ -107,13 +105,14 @@ func (s *SingleStore) Locations() ([]DBLocation, error) {
 		SELECT
 			locationid,
 			kind,
-			geography_longitude(lonlat) as longitude,
-			geography_latitude(lonlat) as latitude
+			geography_longitude(lonlat) AS longitude,
+			geography_latitude(lonlat) AS latitude,
+			city_population AS population
 		FROM locations
 	`)
 }
 
-func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
+func (s *SingleStore) ActivePackages(simulatorID string) ([]DBActivePackage, error) {
 	out := make([]DBActivePackage, 0)
 	return out, s.db.Select(&out, `
 		SELECT
@@ -121,17 +120,15 @@ func (s *SingleStore) ActivePackages() ([]DBActivePackage, error) {
 			p.method,
 			p.destination_locationid AS destinationlocationid,
 
-			GEOGRAPHY_LONGITUDE(pl.lonlat) AS longitude,
-			GEOGRAPHY_LATITUDE(pl.lonlat) AS latitude,
-
 			s.kind AS transitionkind,
 			s.seq AS transitionseq,
 			s.locationid AS transitionlocationid,
-			s.next_locationid AS transitionnextlocationid
+			s.next_locationid AS transitionnextlocationid,
+			s.recorded AS transitionrecorded
 		FROM packages p
 		INNER JOIN package_states s ON p.packageid = s.packageid
-		INNER JOIN package_locations pl ON p.packageid = pl.packageid
-	`)
+		WHERE p.simulatorid = ?
+	`, simulatorID)
 }
 
 func (s *SingleStore) Close() error {

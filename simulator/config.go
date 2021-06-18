@@ -17,7 +17,9 @@ type DatabaseConfig struct {
 }
 
 type TopicsConfig struct {
-	Brokers []string `yaml:"brokers"`
+	Brokers       []string `yaml:"brokers"`
+	Compression   bool     `yaml:"compression"`
+	BatchMaxBytes int      `yaml:"batch_max_bytes"`
 }
 
 type MetricsConfig struct {
@@ -39,12 +41,18 @@ func (n *NormalDistribution) ToDist() *distuv.Normal {
 type Config struct {
 	Verbose int `yaml:"verbose"`
 
+	// SimulatorID must be a unique identifier for this process - if multiple simulators are running, each must have a unique id
+	SimulatorID string `yaml:"id"`
+
+	// NumWorkers controls the number of goroutines which will run the simulator
+	// set to 0 to use the number of cores on the machine
+	NumWorkers int `yaml:"num_workers"`
+
 	// SimInterval determines how fast the simulator runs
 	// set to 0 to cause the simulator to run as fast as possible
 	SimInterval time.Duration `yaml:"sim_interval"`
 
-	StartTime    time.Time     `yaml:"start_time"`
-	TickDuration time.Duration `yaml:"tick_duration"`
+	StartTime time.Time `yaml:"start_time"`
 
 	MaxPackages  int `yaml:"max_packages"`
 	MaxDelivered int `yaml:"max_delivered"`
@@ -75,10 +83,7 @@ type Config struct {
 }
 
 func ParseConfigs(filenames []string) (*Config, error) {
-	// initialize with default values
-	cfg := Config{
-		TickDuration: time.Hour,
-	}
+	cfg := Config{}
 
 	for _, filename := range filenames {
 		f, err := os.Open(filename)

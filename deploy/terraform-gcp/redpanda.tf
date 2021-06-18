@@ -28,6 +28,7 @@ resource "google_compute_instance" "redpanda" {
   }
 
   metadata = {
-    startup-script-url = "gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.setup_redpanda.output_name}"
+    startup-script-url   = "gs://${google_storage_bucket.default.name}/${google_storage_bucket_object.setup_redpanda.output_name}"
+    partitions-per-topic = var.rp_partitions_per_topic
   }
 }

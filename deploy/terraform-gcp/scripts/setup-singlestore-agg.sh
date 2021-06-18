@@ -15,10 +15,16 @@ setup_singlestore_master() {
     local license="$(metadata s2-license)"
     local num_aggs="$(metadata s2-aggs)"
     local num_leaves="$(metadata s2-leaves)"
+    local redundancy_level="$(metadata s2-redundancy)"
+    local partitions_per_leaf="$(metadata s2-partitions-per-leaf)"
 
     memsqlctl set-license --yes --license "${license}"
     memsqlctl bootstrap-aggregator --yes --host $(hostname)
-    memsqlctl enable-high-availability --yes
+    memsqlctl update-config --yes --key default_partitions_per_leaf --value ${partitions_per_leaf} --set-global
+
+    if [[ ${redundancy_level} -eq 2 ]]; then
+        memsqlctl enable-high-availability --yes
+    fi
 
     # setup aggs
     # start at 1 to skip the master (this node)
