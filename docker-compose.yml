@@ -28,8 +28,8 @@ services:
     entrypoint: /bin/bash -c
     command:
       - |
-        rpk --brokers rp-node-0:9092 topic create transitions
-        rpk --brokers rp-node-0:9092 topic create packages
+        rpk --brokers rp-node-0:9092 topic create --partitions 8 transitions
+        rpk --brokers rp-node-0:9092 topic create --partitions 8 packages
   singlestore:
     image: singlestore/cluster-in-a-box:centos-7.3.11-f7c82b8166-3.2.9-1.11.5
     container_name: s2-agg-0

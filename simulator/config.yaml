@@ -4,13 +4,13 @@
 # logging - set to 0 to disable
 # verbose: 1
 
-num_workers: 2
+num_workers: 1
 
 # simulation speed - set to 0 to run the simulator as fast as possible
 # sim_interval: 500ms
 
 # maximum number of packages to simulate at any point (0 = unlimited)
-max_packages: 100000
+max_packages: 10000
 
 # exit after delivering this many packages (0 = unlimited)
 # max_delivered: 1
