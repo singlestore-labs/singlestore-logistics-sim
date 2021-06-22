@@ -33,14 +33,9 @@ func NewTrackersFromActivePackages(c *Config, l *LocationIndex, packages []DBAct
 	out := make(Trackers, 0, len(packages))
 
 	for _, pkg := range packages {
-		pkgState := enum.AtRest
-		if pkg.TransitionKind == enum.DepartureScan {
-			pkgState = enum.InTransit
-		}
-
 		var nextTransitionTime time.Time
 
-		if pkgState == enum.InTransit {
+		if pkg.StateKind == enum.InTransit {
 			segmentStart, err := l.Lookup(pkg.TransitionLocationID)
 			if err != nil {
 				return nil, err
@@ -66,7 +61,7 @@ func NewTrackersFromActivePackages(c *Config, l *LocationIndex, packages []DBAct
 			DestinationLocationID: pkg.DestinationLocationID,
 
 			Delivered:      false,
-			State:          pkgState,
+			State:          pkg.StateKind,
 			Seq:            pkg.TransitionSeq,
 			LastLocationID: pkg.TransitionLocationID,
 

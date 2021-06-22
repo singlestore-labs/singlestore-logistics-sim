@@ -649,7 +649,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.next_locationid\nWHERE ps.kind = 'departure_scan'\nGROUP BY 1;",
+          "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.next_locationid\nWHERE ps.kind = 'in_flight'\nGROUP BY 1;",
           "refId": "A",
           "select": [
             [
@@ -732,7 +732,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.locationid\nWHERE ps.kind = 'arrival_scan'\nGROUP BY 1;",
+          "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.locationid\nWHERE ps.kind = 'at_rest'\nGROUP BY 1;",
           "refId": "A",
           "select": [
             [
@@ -773,8 +773,8 @@
     "list": []
   },
   "time": {
-    "from": "2024-01-07T05:17:15.000Z",
-    "to": "2024-01-16T05:17:15.000Z"
+    "from": "2022-03-06T00:39:59.000Z",
+    "to": "2022-03-15T00:39:59.000Z"
   },
   "timepicker": {},
   "timezone": "",

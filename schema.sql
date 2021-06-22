@@ -102,7 +102,7 @@ CREATE TABLE package_transitions (
     SHARD (packageid)
 );
 
--- this table contains the most recent transition for each package
+-- this table contains the current state of each package
 -- rows are deleted from this table once the corresponding package is delivered
 CREATE TABLE package_states (
     packageid CHAR(36) NOT NULL,
@@ -111,8 +111,7 @@ CREATE TABLE package_states (
     next_locationid BIGINT,
     recorded DATETIME NOT NULL,
 
-    -- kind can not be delivered in this table
-    kind ENUM ('arrival_scan', 'departure_scan') NOT NULL,
+    kind ENUM ('in_flight', 'at_rest') NOT NULL,
 
     PRIMARY KEY (packageid),
     INDEX (recorded),
@@ -169,8 +168,21 @@ BEGIN
     SELECT * FROM batch;
 
     INSERT INTO package_states (packageid, seq, locationid, next_locationid, recorded, kind)
-    SELECT * FROM batch
-    WHERE kind != "delivered"
+    SELECT
+        packageid,
+        seq,
+        locationid,
+        next_locationid,
+        recorded,
+        statekind AS kind
+    FROM (
+        SELECT *, CASE
+            WHEN kind = "arrival_scan" THEN "at_rest"
+            WHEN kind = "departure_scan" THEN "in_flight"
+        END AS statekind
+        FROM batch
+    ) batch
+    WHERE batch.kind != "delivered"
     ON DUPLICATE KEY UPDATE
         seq = IF(VALUES(seq) > package_states.seq, VALUES(seq), package_states.seq),
         locationid = IF(VALUES(seq) > package_states.seq, VALUES(locationid), package_states.locationid),

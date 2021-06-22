@@ -33,7 +33,7 @@ type DBActivePackage struct {
 	DestinationLocationID int64
 
 	// the following fields correspond to the most recent transition for this package
-	TransitionKind           enum.TransitionKind
+	StateKind                enum.PackageState
 	TransitionSeq            int
 	TransitionLocationID     int64
 	TransitionNextLocationID int64
@@ -120,7 +120,7 @@ func (s *SingleStore) ActivePackages(simulatorID string) ([]DBActivePackage, err
 			p.method,
 			p.destination_locationid AS destinationlocationid,
 
-			s.kind AS transitionkind,
+			s.kind AS statekind,
 			s.seq AS transitionseq,
 			s.locationid AS transitionlocationid,
 			s.next_locationid AS transitionnextlocationid,
