@@ -111,7 +111,7 @@ CREATE TABLE package_states (
     next_locationid BIGINT,
     recorded DATETIME NOT NULL,
 
-    kind ENUM ('in_flight', 'at_rest') NOT NULL,
+    kind ENUM ('in_transit', 'at_rest') NOT NULL,
 
     PRIMARY KEY (packageid),
     INDEX (recorded),
@@ -178,7 +178,7 @@ BEGIN
     FROM (
         SELECT *, CASE
             WHEN kind = "arrival_scan" THEN "at_rest"
-            WHEN kind = "departure_scan" THEN "in_flight"
+            WHEN kind = "departure_scan" THEN "in_transit"
         END AS statekind
         FROM batch
     ) batch

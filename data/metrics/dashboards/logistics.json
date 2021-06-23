@@ -649,7 +649,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.next_locationid\nWHERE ps.kind = 'in_flight'\nGROUP BY 1;",
+          "rawSql": "SELECT\n    l.city as name,\n    geography_longitude(l.lonlat) as longitude,\n    geography_latitude(l.lonlat) as latitude,\n    count(*) as metric\nFROM locations l\nINNER JOIN package_states ps ON l.locationid = ps.next_locationid\nWHERE ps.kind = 'in_transit'\nGROUP BY 1;",
           "refId": "A",
           "select": [
             [
