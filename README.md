@@ -8,11 +8,11 @@ tracking system of a hypothetical global logistics company using
 
 ![architecture diagram](images/architecture.png)
 
-## Data Model
+## Data model
 
 ![data model](images/data_model.png)
 
-## Running Locally
+## Running locally
 
 1. [Sign up](https://www.singlestore.com/try-free/) for a free SingleStore license.  This allows you to run up to 4 nodes up to 32 gigs each for free. Grab your license key from [SingleStore portal](https://portal.singlestore.com/?utm_medium=osm&utm_source=github) and set it as an environment variable.
 
@@ -84,13 +84,13 @@ cd deploy/terraform-gcp
 terraform apply
 ```
 
-3. Grafana, Studio, and Prometheus is running locally on the logistics-dashboard which you can access via the following port forwarding options:
+3. Grafana, Studio, and Prometheus are running locally on the logistics-dashboard which you can access via the following port forwarding options:
 
 ```bash
 gcloud compute ssh logistics-dashboard -- -L 9090:localhost:9090 -L 3000:localhost:3000 -L 8080:localhost:8080
 ```
 
-## Redpanda Topic Schemas
+## Redpanda topic schemas
 
 The [simulator](simulator) is a go program which generates package histories and writes them into Redpanda topics.
 
@@ -98,7 +98,7 @@ There are two topics:
  - packages
  - transitions
 
-## packages topic
+## Packages topic
 
 The packages topic contains a record per package. The record is written when we receive the package in question.
 
@@ -122,7 +122,7 @@ The packages topic contains a record per package. The record is written when we 
 }
 ```
 
-## transitions topic
+## Transitions topic
 
 The transitions topic is written to whenever a package changes states. A normal package goes through the following transitions during it's lifetime:
 
@@ -152,7 +152,7 @@ The transitions topic is written to whenever a package changes states. A normal 
 }
 ```
 
-## Interesting Queries
+## Interesting queries
 
 Please contribute interesting queries on the dataset as you find them!
 
