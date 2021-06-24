@@ -16,6 +16,7 @@ type Database interface {
 	CurrentTime() (time.Time, error)
 	Locations() ([]DBLocation, error)
 	ActivePackages(string) ([]DBActivePackage, error)
+	CheckTables() error
 	Close() error
 }
 
@@ -97,6 +98,19 @@ func (s *SingleStore) CurrentTime() (time.Time, error) {
 		return out.Time, nil
 	}
 	return time.Now(), nil
+}
+
+func (s *SingleStore) CheckTables() error {
+	tables := []string{"locations", "packages", "package_transitions", "package_states"}
+	for _, table := range tables {
+		row := s.db.QueryRow("select count(*) from " + table)
+		var out int
+		err := row.Scan(&out)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *SingleStore) Locations() ([]DBLocation, error) {

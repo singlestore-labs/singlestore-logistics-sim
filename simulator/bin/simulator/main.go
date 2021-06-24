@@ -99,6 +99,18 @@ func main() {
 	}
 	defer db.Close()
 
+	// we need to wait for tables to exist since the simulator can start before
+	// the schema has been applied to SingleStore
+	for {
+		err := db.CheckTables()
+		if err != nil {
+			log.Printf("waiting for schema to stabilize: %s; retrying...", err)
+			time.Sleep(time.Second)
+			continue
+		}
+		break
+	}
+
 	if config.StartTime.IsZero() {
 		start, err := db.CurrentTime()
 		if err != nil {
