@@ -37,8 +37,10 @@ prometheus   /bin/prometheus --config.f ...   Up
 rp-node-0    /usr/bin/rpk redpanda star ...   Up
 rp-setup     /bin/bash -c rpk --brokers ...   Exit 0
 s2-agg-0     /startup                         Up
-simulator    ./simulator --config confi ...   Exit 1
+simulator    ./simulator --config confi ...   Up
 ```
+
+> **NOTE:** If you are running the above on a mac you may need to increase the docker system resources. We have found that 6 GB of RAM and 2 CPUs is sufficient to run this demo - but the more you provide to docker the faster things will go. :)
 
 3. You can also check the logs using
 
