@@ -1,6 +1,6 @@
 # Reference Architecture using SingleStore and Redpanda for global logistics
 
-> **Blog Post**: For the story behind this code (and epic dashboards), [check out the blog post](https://www.singlestore.com/blog/scaling-worldwide-parcel-logistics-with-singlestore-and-vectorized/)!
+> **📯 INFO:** For the story behind this code (and epic dashboards), [check out the blog post](https://www.singlestore.com/blog/scaling-worldwide-parcel-logistics-with-singlestore-and-vectorized/)!
 
 This repository provides a reference architecture which simulates the parcel
 tracking system of a hypothetical global logistics company using
