@@ -1,6 +1,8 @@
 CREATE DATABASE logistics;
 USE logistics;
 
+set global default_table_type="rowstore";
+
 -- the packages table stores one row per package
 CREATE TABLE packages (
     -- packageid is a unique identifier for this package
