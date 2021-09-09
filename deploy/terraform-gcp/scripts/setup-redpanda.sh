@@ -26,6 +26,10 @@ setup_redpanda() {
     fi
 
     systemctl start redpanda-tuner redpanda
+
+    # create the topics
+    rpk topic create --replicas 1 --partitions ${partitions_per_topic} packages
+    rpk topic create --replicas 1 --partitions ${partitions_per_topic} transitions
 }
 
 run_or_die setup_redpanda

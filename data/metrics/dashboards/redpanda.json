@@ -8,7 +8,7 @@
     "label": "Node",
     "type": "query",
     "refresh": 1,
-    "options": null,
+    "options": [],
     "includeAll": true,
     "allFormat": "",
     "allValue": ".*",
@@ -28,7 +28,7 @@
     "label": "Shard",
     "type": "query",
     "refresh": 1,
-    "options": null,
+    "options": [],
     "includeAll": true,
     "allFormat": "",
     "allValue": ".*",
@@ -1122,7 +1122,7 @@
     },
     {
      "type": "graph",
-     "id": 59,
+     "id": 61,
      "title": "Rate - kafka_rpc: Number of errors when shutting down the connection",
      "datasource": "prometheus",
      "editable": true,
@@ -1194,7 +1194,7 @@
     },
     {
      "type": "graph",
-     "id": 65,
+     "id": 67,
      "title": "Rate - kafka_rpc: Number of requests with not available RPC method",
      "datasource": "prometheus",
      "editable": true,
@@ -1266,7 +1266,7 @@
     },
     {
      "type": "graph",
-     "id": 71,
+     "id": 73,
      "title": "Rate - kafka_rpc: Number of service errors",
      "datasource": "prometheus",
      "editable": true,
@@ -1338,7 +1338,7 @@
     },
     {
      "type": "graph",
-     "id": 85,
+     "id": 91,
      "title": "Rate - Number of failed heartbeat requests",
      "datasource": "prometheus",
      "editable": true,
@@ -1410,7 +1410,7 @@
     },
     {
      "type": "graph",
-     "id": 92,
+     "id": 98,
      "title": "Rate - Number of failed recovery requests",
      "datasource": "prometheus",
      "editable": true,
@@ -1482,7 +1482,7 @@
     },
     {
      "type": "graph",
-     "id": 96,
+     "id": 102,
      "title": "Rate - Number of failed replicate requests",
      "datasource": "prometheus",
      "editable": true,
@@ -1554,7 +1554,7 @@
     },
     {
      "type": "graph",
-     "id": 102,
+     "id": 108,
      "title": "Rate - Total aio errors",
      "datasource": "prometheus",
      "editable": true,
@@ -1626,14 +1626,374 @@
     },
     {
      "type": "graph",
-     "id": 141,
-     "title": "Rate - Number of batch parsing (reading) errors",
+     "id": 130,
+     "title": "Rate - Number of errors in client correlation id",
      "datasource": "prometheus",
      "editable": true,
      "gridPos": {
       "h": 6,
       "w": 8,
       "x": 0,
+      "y": 28
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_client_correlation_errors{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 131,
+     "title": "Rate - Number of connection errors",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 8,
+      "y": 28
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_connection_errors{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 136,
+     "title": "Rate - Number of errors while dispatching responses",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 16,
+      "y": 28
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_read_dispatch_errors{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 137,
+     "title": "Rate - Number or requests errors",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 0,
+      "y": 28
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_request_errors{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 142,
+     "title": "Rate - Number of responses with wrong correlation id",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 8,
+      "y": 28
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_server_correlation_errors{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 162,
+     "title": "Rate - Number of batch parsing (reading) errors",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 16,
       "y": 28
      },
      "transparent": false,
@@ -1698,14 +2058,14 @@
     },
     {
      "type": "graph",
-     "id": 142,
+     "id": 163,
      "title": "Rate - Number of batch write errors",
      "datasource": "prometheus",
      "editable": true,
      "gridPos": {
       "h": 6,
       "w": 8,
-      "x": 8,
+      "x": 0,
       "y": 28
      },
      "transparent": false,
@@ -2224,7 +2584,7 @@
   {
    "type": "row",
    "collapsed": true,
-   "id": 58,
+   "id": 60,
    "title": "kafka_rpc",
    "editable": true,
    "gridPos": {
@@ -2240,7 +2600,7 @@
    "panels": [
     {
      "type": "graph",
-     "id": 57,
+     "id": 59,
      "title": "kafka_rpc: Currently active connections",
      "datasource": "prometheus",
      "editable": true,
@@ -2312,7 +2672,7 @@
     },
     {
      "type": "graph",
-     "id": 60,
+     "id": 62,
      "title": "Rate - kafka_rpc: Number of accepted connections",
      "datasource": "prometheus",
      "editable": true,
@@ -2384,7 +2744,7 @@
     },
     {
      "type": "graph",
-     "id": 61,
+     "id": 63,
      "title": "Rate - kafka_rpc: Memory consumed by request processing",
      "datasource": "prometheus",
      "editable": true,
@@ -2456,7 +2816,7 @@
     },
     {
      "type": "graph",
-     "id": 62,
+     "id": 64,
      "title": "Rate - kafka_rpc: Number of requests with corrupted headers",
      "datasource": "prometheus",
      "editable": true,
@@ -2528,7 +2888,7 @@
     },
     {
      "type": "graph",
-     "id": 63,
+     "id": 65,
      "title": "kafka_rpc: Latency ",
      "datasource": "prometheus",
      "editable": true,
@@ -2600,7 +2960,7 @@
     },
     {
      "type": "graph",
-     "id": 64,
+     "id": 66,
      "title": "Rate - kafka_rpc: Maximum memory allowed for RPC",
      "datasource": "prometheus",
      "editable": true,
@@ -2672,7 +3032,7 @@
     },
     {
      "type": "graph",
-     "id": 66,
+     "id": 68,
      "title": "Rate - kafka_rpc: Number of bytes received from the clients in valid requests",
      "datasource": "prometheus",
      "editable": true,
@@ -2744,7 +3104,7 @@
     },
     {
      "type": "graph",
-     "id": 67,
+     "id": 69,
      "title": "Rate - kafka_rpc: Number of requests blocked in memory backpressure",
      "datasource": "prometheus",
      "editable": true,
@@ -2816,7 +3176,7 @@
     },
     {
      "type": "graph",
-     "id": 68,
+     "id": 70,
      "title": "Rate - kafka_rpc: Number of successfull requests",
      "datasource": "prometheus",
      "editable": true,
@@ -2888,7 +3248,7 @@
     },
     {
      "type": "graph",
-     "id": 69,
+     "id": 71,
      "title": "kafka_rpc: Number of requests being processed by server",
      "datasource": "prometheus",
      "editable": true,
@@ -2960,7 +3320,7 @@
     },
     {
      "type": "graph",
-     "id": 70,
+     "id": 72,
      "title": "Rate - kafka_rpc: Number of bytes sent to clients",
      "datasource": "prometheus",
      "editable": true,
@@ -3035,7 +3395,7 @@
   {
    "type": "row",
    "collapsed": true,
-   "id": 73,
+   "id": 79,
    "title": "memory",
    "editable": true,
    "gridPos": {
@@ -3051,7 +3411,7 @@
    "panels": [
     {
      "type": "graph",
-     "id": 72,
+     "id": 78,
      "title": "Rate - Allocated memeory size in bytes",
      "datasource": "prometheus",
      "editable": true,
@@ -3123,7 +3483,7 @@
     },
     {
      "type": "graph",
-     "id": 74,
+     "id": 80,
      "title": "Rate - Total number of cross cpu free",
      "datasource": "prometheus",
      "editable": true,
@@ -3195,7 +3555,7 @@
     },
     {
      "type": "graph",
-     "id": 75,
+     "id": 81,
      "title": "Rate - Free memeory size in bytes",
      "datasource": "prometheus",
      "editable": true,
@@ -3267,7 +3627,7 @@
     },
     {
      "type": "graph",
-     "id": 76,
+     "id": 82,
      "title": "Rate - Total number of free operations",
      "datasource": "prometheus",
      "editable": true,
@@ -3339,7 +3699,7 @@
     },
     {
      "type": "graph",
-     "id": 77,
+     "id": 83,
      "title": "Number of live objects",
      "datasource": "prometheus",
      "editable": true,
@@ -3411,7 +3771,7 @@
     },
     {
      "type": "graph",
-     "id": 78,
+     "id": 84,
      "title": "Rate - Total number of malloc operations",
      "datasource": "prometheus",
      "editable": true,
@@ -3483,7 +3843,7 @@
     },
     {
      "type": "graph",
-     "id": 79,
+     "id": 85,
      "title": "Rate - Total reclaims operations",
      "datasource": "prometheus",
      "editable": true,
@@ -3555,7 +3915,7 @@
     },
     {
      "type": "graph",
-     "id": 80,
+     "id": 86,
      "title": "Rate - Total memeory size in bytes",
      "datasource": "prometheus",
      "editable": true,
@@ -5014,7 +5374,439 @@
     },
     {
      "type": "graph",
-     "id": 81,
+     "id": 57,
+     "title": "Fetch Latency",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 8,
+      "y": 32
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(vectorized_kafka_latency_fetch_latency_us{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, latency_metric: {{latency_metric}}, shard: {{shard}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": true
+    },
+    {
+     "type": "graph",
+     "id": 58,
+     "title": "Produce Latency",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 16,
+      "y": 32
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(vectorized_kafka_latency_produce_latency_us{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, latency_metric: {{latency_metric}}, shard: {{shard}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": true
+    },
+    {
+     "type": "graph",
+     "id": 74,
+     "title": "Rate - Number of errors attempting to transfer leader",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 0,
+      "y": 32
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_leader_balancer_leader_transfer_error{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 75,
+     "title": "Rate - Number of times no balance improvement was found",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 8,
+      "y": 32
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_leader_balancer_leader_transfer_no_improvement{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 76,
+     "title": "Rate - Number of successful leader transfers",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 16,
+      "y": 32
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_leader_balancer_leader_transfer_succeeded{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 77,
+     "title": "Rate - Number of timeouts attempting to transfer leader",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 0,
+      "y": 32
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_leader_balancer_leader_transfer_timeout{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 87,
      "title": "Request latency",
      "datasource": "prometheus",
      "editable": true,
@@ -5086,7 +5878,7 @@
     },
     {
      "type": "graph",
-     "id": 130,
+     "id": 151,
      "title": "Rate - Total number of reported stalls, look in the traces for the exact reason",
      "datasource": "prometheus",
      "editable": true,
@@ -5161,7 +5953,7 @@
   {
    "type": "row",
    "collapsed": true,
-   "id": 83,
+   "id": 89,
    "title": "raft",
    "editable": true,
    "gridPos": {
@@ -5177,7 +5969,7 @@
    "panels": [
     {
      "type": "graph",
-     "id": 82,
+     "id": 88,
      "title": "Rate - Number of finished replicate requests",
      "datasource": "prometheus",
      "editable": true,
@@ -5249,7 +6041,7 @@
     },
     {
      "type": "graph",
-     "id": 84,
+     "id": 90,
      "title": "Number of raft groups",
      "datasource": "prometheus",
      "editable": true,
@@ -5321,7 +6113,7 @@
     },
     {
      "type": "graph",
-     "id": 86,
+     "id": 92,
      "title": "Number of groups for which node is a leader",
      "datasource": "prometheus",
      "editable": true,
@@ -5393,7 +6185,7 @@
     },
     {
      "type": "graph",
-     "id": 87,
+     "id": 93,
      "title": "Rate - Number of leadership changes",
      "datasource": "prometheus",
      "editable": true,
@@ -5465,7 +6257,7 @@
     },
     {
      "type": "graph",
-     "id": 88,
+     "id": 94,
      "title": "Rate - Number of log flushes",
      "datasource": "prometheus",
      "editable": true,
@@ -5537,7 +6329,7 @@
     },
     {
      "type": "graph",
-     "id": 89,
+     "id": 95,
      "title": "Rate - Number of log truncations",
      "datasource": "prometheus",
      "editable": true,
@@ -5609,7 +6401,7 @@
     },
     {
      "type": "graph",
-     "id": 90,
+     "id": 96,
      "title": "Rate - Number of append requests received",
      "datasource": "prometheus",
      "editable": true,
@@ -5681,7 +6473,7 @@
     },
     {
      "type": "graph",
-     "id": 91,
+     "id": 97,
      "title": "Rate - Number of vote requests received",
      "datasource": "prometheus",
      "editable": true,
@@ -5753,7 +6545,7 @@
     },
     {
      "type": "graph",
-     "id": 93,
+     "id": 99,
      "title": "Rate - Number of replicate requests with quorum ack consistency",
      "datasource": "prometheus",
      "editable": true,
@@ -5825,7 +6617,7 @@
     },
     {
      "type": "graph",
-     "id": 94,
+     "id": 100,
      "title": "Rate - Number of replicate requests with leader ack consistency",
      "datasource": "prometheus",
      "editable": true,
@@ -5897,7 +6689,7 @@
     },
     {
      "type": "graph",
-     "id": 95,
+     "id": 101,
      "title": "Rate - Number of replicate requests with no ack consistency",
      "datasource": "prometheus",
      "editable": true,
@@ -5969,7 +6761,7 @@
     },
     {
      "type": "graph",
-     "id": 97,
+     "id": 103,
      "title": "Rate - Number of vote requests sent",
      "datasource": "prometheus",
      "editable": true,
@@ -6044,7 +6836,7 @@
   {
    "type": "row",
    "collapsed": true,
-   "id": 99,
+   "id": 105,
    "title": "reactor",
    "editable": true,
    "gridPos": {
@@ -6060,7 +6852,7 @@
    "panels": [
     {
      "type": "graph",
-     "id": 98,
+     "id": 104,
      "title": "Rate - Total number of abandoned failed futures, futures destroyed while still containing an exception",
      "datasource": "prometheus",
      "editable": true,
@@ -6132,7 +6924,7 @@
     },
     {
      "type": "graph",
-     "id": 100,
+     "id": 106,
      "title": "Rate - Total aio-reads bytes",
      "datasource": "prometheus",
      "editable": true,
@@ -6204,7 +6996,7 @@
     },
     {
      "type": "graph",
-     "id": 101,
+     "id": 107,
      "title": "Rate - Total aio-writes bytes",
      "datasource": "prometheus",
      "editable": true,
@@ -6276,7 +7068,7 @@
     },
     {
      "type": "graph",
-     "id": 103,
+     "id": 109,
      "title": "Rate - Total aio-reads operations",
      "datasource": "prometheus",
      "editable": true,
@@ -6348,7 +7140,7 @@
     },
     {
      "type": "graph",
-     "id": 104,
+     "id": 110,
      "title": "Rate - Total aio-writes operations",
      "datasource": "prometheus",
      "editable": true,
@@ -6420,7 +7212,7 @@
     },
     {
      "type": "graph",
-     "id": 105,
+     "id": 111,
      "title": "Rate - Total number of C++ exceptions",
      "datasource": "prometheus",
      "editable": true,
@@ -6492,7 +7284,7 @@
     },
     {
      "type": "graph",
-     "id": 106,
+     "id": 112,
      "title": "Rate - Total cpu busy time in milliseconds",
      "datasource": "prometheus",
      "editable": true,
@@ -6564,7 +7356,7 @@
     },
     {
      "type": "graph",
-     "id": 107,
+     "id": 113,
      "title": "Rate - Total steal time, the time in which some other process was running while Seastar was not trying to run (not sleeping).Because this is in userspace, some time that could be legitimally thought as steal time is not accounted as such. For example, if we are sleeping and can wake up but the kernel hasn't woken us up yet.",
      "datasource": "prometheus",
      "editable": true,
@@ -6636,7 +7428,7 @@
     },
     {
      "type": "graph",
-     "id": 108,
+     "id": 114,
      "title": "Rate - Counts bytes read from disk file streams.  A high rate indicates high disk activity. Divide by fstream_reads to determine average read size.",
      "datasource": "prometheus",
      "editable": true,
@@ -6708,7 +7500,7 @@
     },
     {
      "type": "graph",
-     "id": 109,
+     "id": 115,
      "title": "Rate - Counts the number of bytes read from disk that could not be satisfied from read-ahead buffers, and had to block. Indicates short streams, or incorrect read ahead configuration.",
      "datasource": "prometheus",
      "editable": true,
@@ -6780,7 +7572,7 @@
     },
     {
      "type": "graph",
-     "id": 110,
+     "id": 116,
      "title": "Rate - Counts reads from disk file streams.  A high rate indicates high disk activity. Contrast with other fstream_read* counters to locate bottlenecks.",
      "datasource": "prometheus",
      "editable": true,
@@ -6852,7 +7644,7 @@
     },
     {
      "type": "graph",
-     "id": 111,
+     "id": 117,
      "title": "Rate - Counts the number of buffered bytes that were read ahead of time and were discarded because they were not needed, wasting disk bandwidth. Indicates over-eager read ahead configuration.",
      "datasource": "prometheus",
      "editable": true,
@@ -6924,7 +7716,7 @@
     },
     {
      "type": "graph",
-     "id": 112,
+     "id": 118,
      "title": "Rate - Counts the number of times a buffer that was read ahead of time and was discarded because it was not needed, wasting disk bandwidth. Indicates over-eager read ahead configuration.",
      "datasource": "prometheus",
      "editable": true,
@@ -6996,7 +7788,7 @@
     },
     {
      "type": "graph",
-     "id": 113,
+     "id": 119,
      "title": "Rate - Counts the number of times a disk read could not be satisfied from read-ahead buffers, and had to block. Indicates short streams, or incorrect read ahead configuration.",
      "datasource": "prometheus",
      "editable": true,
@@ -7068,7 +7860,7 @@
     },
     {
      "type": "graph",
-     "id": 114,
+     "id": 120,
      "title": "Rate - Total number of fsync operations",
      "datasource": "prometheus",
      "editable": true,
@@ -7140,7 +7932,7 @@
     },
     {
      "type": "graph",
-     "id": 115,
+     "id": 121,
      "title": "Rate - Total number of io-threaded-fallbacks operations",
      "datasource": "prometheus",
      "editable": true,
@@ -7212,7 +8004,7 @@
     },
     {
      "type": "graph",
-     "id": 116,
+     "id": 122,
      "title": "Rate - Total number of logging failures",
      "datasource": "prometheus",
      "editable": true,
@@ -7284,7 +8076,7 @@
     },
     {
      "type": "graph",
-     "id": 117,
+     "id": 123,
      "title": "Rate - Number of times pollers were executed",
      "datasource": "prometheus",
      "editable": true,
@@ -7356,7 +8148,7 @@
     },
     {
      "type": "graph",
-     "id": 118,
+     "id": 124,
      "title": "Number of pending tasks in the queue",
      "datasource": "prometheus",
      "editable": true,
@@ -7428,7 +8220,7 @@
     },
     {
      "type": "graph",
-     "id": 119,
+     "id": 125,
      "title": "Rate - Total tasks processed",
      "datasource": "prometheus",
      "editable": true,
@@ -7500,7 +8292,7 @@
     },
     {
      "type": "graph",
-     "id": 120,
+     "id": 126,
      "title": "Rate - Number of tasks in the timer-pending queue",
      "datasource": "prometheus",
      "editable": true,
@@ -7572,7 +8364,7 @@
     },
     {
      "type": "graph",
-     "id": 121,
+     "id": 127,
      "title": "CPU utilization",
      "datasource": "prometheus",
      "editable": true,
@@ -7647,8 +8439,8 @@
   {
    "type": "row",
    "collapsed": true,
-   "id": 123,
-   "title": "scheduler",
+   "id": 129,
+   "title": "rpc_client",
    "editable": true,
    "gridPos": {
     "h": 6,
@@ -7663,8 +8455,8 @@
    "panels": [
     {
      "type": "graph",
-     "id": 122,
-     "title": "Size of backlog on this queue, in tasks; indicates whether the queue is busy and/or contended",
+     "id": 128,
+     "title": "Currently active connections",
      "datasource": "prometheus",
      "editable": true,
      "gridPos": {
@@ -7672,6 +8464,673 @@
       "w": 8,
       "x": 0,
       "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(vectorized_rpc_client_active_connections{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": true
+    },
+    {
+     "type": "graph",
+     "id": 132,
+     "title": "Rate - Connection attempts",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 8,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_connects{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 133,
+     "title": "Rate - Number of responses with corrupted headers",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 16,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_corrupted_headers{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 134,
+     "title": "Rate - Total number of bytes sent (including headers)",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 0,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_in_bytes{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "Bps"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 135,
+     "title": "Rate - Total number of bytes received",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 8,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_out_bytes{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "Bps"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 138,
+     "title": "Rate - Number or requests timeouts",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 16,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_request_timeouts{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 139,
+     "title": "Rate - Number of requests",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 0,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_requests{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 140,
+     "title": "Rate - Number of requests that are blocked beacause of insufficient memory",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 8,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(irate(vectorized_rpc_client_requests_blocked_memory{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}[1m])) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "ops"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": false
+    },
+    {
+     "type": "graph",
+     "id": 141,
+     "title": "Number of requests pending",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 16,
+      "y": 35
+     },
+     "transparent": false,
+     "links": null,
+     "renderer": "flot",
+     "span": 4,
+     "error": false,
+     "targets": [
+      {
+       "refId": "",
+       "expr": "sum(vectorized_rpc_client_requests_pending{instance=~\"[[node]]\",shard=~\"[[node_shard]]\"}) by ([[aggr_criteria]])",
+       "intervalFactor": 2,
+       "step": 10,
+       "legendFormat": "node: {{instance}}, shard: {{shard}}, target: {{target}}",
+       "format": "time_series"
+      }
+     ],
+     "xaxis": {
+      "format": "",
+      "logBase": 0,
+      "show": true,
+      "mode": "time"
+     },
+     "yaxes": [
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      },
+      {
+       "label": null,
+       "show": true,
+       "logBase": 1,
+       "min": 0,
+       "format": "short"
+      }
+     ],
+     "legend": {
+      "show": true,
+      "max": false,
+      "min": false,
+      "values": false,
+      "avg": false,
+      "current": false,
+      "total": false
+     },
+     "fill": 1,
+     "linewidth": 2,
+     "nullPointMode": "null",
+     "thresholds": null,
+     "lines": true,
+     "bars": false,
+     "tooltip": {
+      "shared": true,
+      "value_type": "cumulative",
+      "msResolution": true
+     },
+     "aliasColors": {},
+     "steppedLine": true
+    }
+   ]
+  },
+  {
+   "type": "row",
+   "collapsed": true,
+   "id": 144,
+   "title": "scheduler",
+   "editable": true,
+   "gridPos": {
+    "h": 6,
+    "w": 24,
+    "x": 0,
+    "y": 36
+   },
+   "transparent": false,
+   "links": null,
+   "span": 0,
+   "error": false,
+   "panels": [
+    {
+     "type": "graph",
+     "id": 143,
+     "title": "Size of backlog on this queue, in tasks; indicates whether the queue is busy and/or contended",
+     "datasource": "prometheus",
+     "editable": true,
+     "gridPos": {
+      "h": 6,
+      "w": 8,
+      "x": 0,
+      "y": 36
      },
      "transparent": false,
      "links": null,
@@ -7735,7 +9194,7 @@
     },
     {
      "type": "graph",
-     "id": 124,
+     "id": 145,
      "title": "Rate - Accumulated runtime of this task queue; an increment rate of 1000ms per second indicates full utilization",
      "datasource": "prometheus",
      "editable": true,
@@ -7743,7 +9202,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 35
+      "y": 36
      },
      "transparent": false,
      "links": null,
@@ -7807,7 +9266,7 @@
     },
     {
      "type": "graph",
-     "id": 125,
+     "id": 146,
      "title": "Shares allocated to this queue",
      "datasource": "prometheus",
      "editable": true,
@@ -7815,7 +9274,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 35
+      "y": 36
      },
      "transparent": false,
      "links": null,
@@ -7879,7 +9338,7 @@
     },
     {
      "type": "graph",
-     "id": 126,
+     "id": 147,
      "title": "Rate - Accumulated starvation time of this task queue; an increment rate of 1000ms per second indicates the scheduler feels really bad",
      "datasource": "prometheus",
      "editable": true,
@@ -7887,7 +9346,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 35
+      "y": 36
      },
      "transparent": false,
      "links": null,
@@ -7951,7 +9410,7 @@
     },
     {
      "type": "graph",
-     "id": 127,
+     "id": 148,
      "title": "Rate - Count of tasks executing on this queue; indicates together with runtime_ms indicates length of tasks",
      "datasource": "prometheus",
      "editable": true,
@@ -7959,7 +9418,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 35
+      "y": 36
      },
      "transparent": false,
      "links": null,
@@ -8023,7 +9482,7 @@
     },
     {
      "type": "graph",
-     "id": 128,
+     "id": 149,
      "title": "Rate - Total amount in milliseconds we were in violation of the task quota",
      "datasource": "prometheus",
      "editable": true,
@@ -8031,7 +9490,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 35
+      "y": 36
      },
      "transparent": false,
      "links": null,
@@ -8095,7 +9554,7 @@
     },
     {
      "type": "graph",
-     "id": 129,
+     "id": 150,
      "title": "Rate - Accumulated waittime of this task queue; an increment rate of 1000ms per second indicates queue is waiting for something (e.g. IO)",
      "datasource": "prometheus",
      "editable": true,
@@ -8103,7 +9562,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 35
+      "y": 36
      },
      "transparent": false,
      "links": null,
@@ -8170,14 +9629,14 @@
   {
    "type": "row",
    "collapsed": true,
-   "id": 132,
+   "id": 153,
    "title": "storage",
    "editable": true,
    "gridPos": {
     "h": 6,
     "w": 24,
     "x": 0,
-    "y": 36
+    "y": 37
    },
    "transparent": false,
    "links": null,
@@ -8186,7 +9645,7 @@
    "panels": [
     {
      "type": "graph",
-     "id": 131,
+     "id": 152,
      "title": "controller backlog",
      "datasource": "prometheus",
      "editable": true,
@@ -8194,7 +9653,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8258,7 +9717,7 @@
     },
     {
      "type": "graph",
-     "id": 133,
+     "id": 154,
      "title": "current controller error, i.e difference between set point and backlog size",
      "datasource": "prometheus",
      "editable": true,
@@ -8266,7 +9725,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8330,7 +9789,7 @@
     },
     {
      "type": "graph",
-     "id": 134,
+     "id": 155,
      "title": "controller output, i.e. number of shares",
      "datasource": "prometheus",
      "editable": true,
@@ -8338,7 +9797,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8402,7 +9861,7 @@
     },
     {
      "type": "graph",
-     "id": 135,
+     "id": 156,
      "title": "Rate - Size of the database in memory",
      "datasource": "prometheus",
      "editable": true,
@@ -8410,7 +9869,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8474,7 +9933,7 @@
     },
     {
      "type": "graph",
-     "id": 136,
+     "id": 157,
      "title": "Rate - Number of entries fetched",
      "datasource": "prometheus",
      "editable": true,
@@ -8482,7 +9941,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8546,7 +10005,7 @@
     },
     {
      "type": "graph",
-     "id": 137,
+     "id": 158,
      "title": "Rate - Number of entries removaled",
      "datasource": "prometheus",
      "editable": true,
@@ -8554,7 +10013,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8618,7 +10077,7 @@
     },
     {
      "type": "graph",
-     "id": 138,
+     "id": 159,
      "title": "Rate - Number of entries written",
      "datasource": "prometheus",
      "editable": true,
@@ -8626,7 +10085,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8690,7 +10149,7 @@
     },
     {
      "type": "graph",
-     "id": 139,
+     "id": 160,
      "title": "Rate - Number of keys in the database",
      "datasource": "prometheus",
      "editable": true,
@@ -8698,7 +10157,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8762,7 +10221,7 @@
     },
     {
      "type": "graph",
-     "id": 140,
+     "id": 161,
      "title": "Rate - Number of segments rolled",
      "datasource": "prometheus",
      "editable": true,
@@ -8770,7 +10229,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8834,7 +10293,7 @@
     },
     {
      "type": "graph",
-     "id": 143,
+     "id": 164,
      "title": "Rate - Total number of batches read",
      "datasource": "prometheus",
      "editable": true,
@@ -8842,7 +10301,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8906,7 +10365,7 @@
     },
     {
      "type": "graph",
-     "id": 144,
+     "id": 165,
      "title": "Rate - Total number of batches written",
      "datasource": "prometheus",
      "editable": true,
@@ -8914,7 +10373,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -8978,7 +10437,7 @@
     },
     {
      "type": "graph",
-     "id": 145,
+     "id": 166,
      "title": "Rate - Reader cache hits",
      "datasource": "prometheus",
      "editable": true,
@@ -8986,7 +10445,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9050,7 +10509,7 @@
     },
     {
      "type": "graph",
-     "id": 146,
+     "id": 167,
      "title": "Rate - Reader cache misses",
      "datasource": "prometheus",
      "editable": true,
@@ -9058,7 +10517,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9122,7 +10581,7 @@
     },
     {
      "type": "graph",
-     "id": 147,
+     "id": 168,
      "title": "Rate - Total number of cached batches read",
      "datasource": "prometheus",
      "editable": true,
@@ -9130,7 +10589,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9194,7 +10653,7 @@
     },
     {
      "type": "graph",
-     "id": 148,
+     "id": 169,
      "title": "Rate - Total number of cached bytes read",
      "datasource": "prometheus",
      "editable": true,
@@ -9202,7 +10661,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9266,7 +10725,7 @@
     },
     {
      "type": "graph",
-     "id": 149,
+     "id": 170,
      "title": "Rate - Number of compacted segments",
      "datasource": "prometheus",
      "editable": true,
@@ -9274,7 +10733,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9338,7 +10797,7 @@
     },
     {
      "type": "graph",
-     "id": 150,
+     "id": 171,
      "title": "Rate - Average segment compaction ratio",
      "datasource": "prometheus",
      "editable": true,
@@ -9346,7 +10805,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9410,7 +10869,7 @@
     },
     {
      "type": "graph",
-     "id": 151,
+     "id": 172,
      "title": "Rate - Number of times we had to re-construct the .compaction index on a segment",
      "datasource": "prometheus",
      "editable": true,
@@ -9418,7 +10877,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9482,7 +10941,7 @@
     },
     {
      "type": "graph",
-     "id": 152,
+     "id": 173,
      "title": "Rate - Number of active log segments",
      "datasource": "prometheus",
      "editable": true,
@@ -9490,7 +10949,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9554,7 +11013,7 @@
     },
     {
      "type": "graph",
-     "id": 153,
+     "id": 174,
      "title": "Rate - Number of created log segments",
      "datasource": "prometheus",
      "editable": true,
@@ -9562,7 +11021,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9626,7 +11085,7 @@
     },
     {
      "type": "graph",
-     "id": 154,
+     "id": 175,
      "title": "Rate - Number of removed log segments",
      "datasource": "prometheus",
      "editable": true,
@@ -9634,7 +11093,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9698,7 +11157,7 @@
     },
     {
      "type": "graph",
-     "id": 155,
+     "id": 176,
      "title": "Current size of partition in bytes",
      "datasource": "prometheus",
      "editable": true,
@@ -9706,7 +11165,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9770,7 +11229,7 @@
     },
     {
      "type": "graph",
-     "id": 156,
+     "id": 177,
      "title": "Rate - Total number of bytes read",
      "datasource": "prometheus",
      "editable": true,
@@ -9778,7 +11237,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9842,7 +11301,7 @@
     },
     {
      "type": "graph",
-     "id": 157,
+     "id": 178,
      "title": "Rate - Number of readers added to cache",
      "datasource": "prometheus",
      "editable": true,
@@ -9850,7 +11309,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9914,7 +11373,7 @@
     },
     {
      "type": "graph",
-     "id": 158,
+     "id": 179,
      "title": "Rate - Number of readers evicted from cache",
      "datasource": "prometheus",
      "editable": true,
@@ -9922,7 +11381,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -9986,7 +11445,7 @@
     },
     {
      "type": "graph",
-     "id": 159,
+     "id": 180,
      "title": "Rate - Total number of bytes written",
      "datasource": "prometheus",
      "editable": true,
@@ -9994,7 +11453,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -10058,7 +11517,7 @@
     },
     {
      "type": "graph",
-     "id": 160,
+     "id": 181,
      "title": "Batch cache hit ratio - batches",
      "datasource": "prometheus",
      "editable": true,
@@ -10066,7 +11525,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -10130,7 +11589,7 @@
     },
     {
      "type": "graph",
-     "id": 161,
+     "id": 182,
      "title": "Batch cache hit ratio - bytes",
      "datasource": "prometheus",
      "editable": true,
@@ -10138,7 +11597,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 36
+      "y": 37
      },
      "transparent": false,
      "links": null,
@@ -10212,7 +11671,7 @@
     "h": 6,
     "w": 24,
     "x": 0,
-    "y": 37
+    "y": 38
    },
    "transparent": false,
    "links": null,
@@ -10229,7 +11688,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10301,7 +11760,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10373,7 +11832,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10445,7 +11904,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10517,7 +11976,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10589,7 +12048,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10661,7 +12120,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10733,7 +12192,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10805,7 +12264,7 @@
       "h": 6,
       "w": 8,
       "x": 16,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10877,7 +12336,7 @@
       "h": 6,
       "w": 8,
       "x": 0,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
@@ -10949,7 +12408,7 @@
       "h": 6,
       "w": 8,
       "x": 8,
-      "y": 37
+      "y": 38
      },
      "transparent": false,
      "links": null,
