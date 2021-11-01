@@ -18,6 +18,7 @@ setup_redpanda() {
     rpk config set organization singlestore
     rpk config set redpanda.default_topic_partitions ${partitions_per_topic}
     rpk config set redpanda.enable_idempotence true
+    rpk config set redpanda.enable_auto_rebalance_on_node_add true
 
     if [[ ${node_index} -eq 0 ]]; then
         rpk config bootstrap --id 0 --self $(hostname -i)
@@ -28,8 +29,10 @@ setup_redpanda() {
     systemctl start redpanda-tuner redpanda
 
     # create the topics
-    rpk topic create --replicas 1 --partitions ${partitions_per_topic} packages
-    rpk topic create --replicas 1 --partitions ${partitions_per_topic} transitions
+    if [[ ${node_index} -ne 0 ]]; then
+        rpk topic create --replicas 1 --partitions ${partitions_per_topic} packages
+        rpk topic create --replicas 1 --partitions ${partitions_per_topic} transitions
+    fi
 }
 
 run_or_die setup_redpanda
